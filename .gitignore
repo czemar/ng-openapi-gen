@@ -5,7 +5,7 @@ out
 .idea
 
 # Go
-ng-openapi-gen
+/ng-openapi-gen
 
 # Generated API
 src/app/api/

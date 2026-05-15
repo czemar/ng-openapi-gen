@@ -62,4 +62,4 @@ jobs:
       with:
         go-version: '1.25'
     - name: Check Go module proxy readiness
-      run: GOPROXY=proxy.golang.org,direct go list -m github.com/cyclosproject/ng-openapi-gen@${{ github.ref_name }}
+      run: GOPROXY=proxy.golang.org,direct go list -m github.com/czemar/ng-openapi-gen@${{ github.ref_name }}
