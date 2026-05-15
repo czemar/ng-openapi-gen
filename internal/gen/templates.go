@@ -2,10 +2,13 @@ package gen
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/czemar/ng-openapi-gen"
 )
 
 // TemplateManager manages Go templates for code generation
@@ -15,7 +18,7 @@ type TemplateManager struct {
 }
 
 // NewTemplateManager creates a new template manager with built-in and optional custom templates
-func NewTemplateManager(builtInDir string, customDir string) (*TemplateManager, error) {
+func NewTemplateManager(customDir string) (*TemplateManager, error) {
 	tm := &TemplateManager{
 		templates: make(map[string]*template.Template),
 		funcs: template.FuncMap{
@@ -59,8 +62,8 @@ func NewTemplateManager(builtInDir string, customDir string) (*TemplateManager, 
 		},
 	}
 
-	// Load built-in templates
-	if err := tm.loadDir(builtInDir); err != nil {
+	// Load embedded built-in templates
+	if err := tm.loadFS(ngopenapigen.TemplatesFS, "."); err != nil {
 		return nil, fmt.Errorf("load built-in templates: %w", err)
 	}
 
@@ -83,6 +86,28 @@ func (tm *TemplateManager) loadDir(dir string) error {
 		name := filepath.Base(entry)
 		baseName := strings.TrimSuffix(name, ".go.tmpl")
 		data, err := os.ReadFile(entry)
+		if err != nil {
+			return fmt.Errorf("read template %s: %w", name, err)
+		}
+		t := template.New(baseName).Funcs(tm.funcs)
+		t, err = t.Parse(string(data))
+		if err != nil {
+			return fmt.Errorf("parse template %s: %w", name, err)
+		}
+		tm.templates[baseName] = t
+	}
+	return nil
+}
+
+func (tm *TemplateManager) loadFS(fsys fs.FS, dir string) error {
+	entries, err := fs.Glob(fsys, "templates/*.go.tmpl")
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		name := filepath.Base(entry)
+		baseName := strings.TrimSuffix(name, ".go.tmpl")
+		data, err := fs.ReadFile(fsys, entry)
 		if err != nil {
 			return fmt.Errorf("read template %s: %w", name, err)
 		}

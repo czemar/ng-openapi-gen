@@ -52,16 +52,8 @@ func run() error {
 		filterPaths(spec, opts)
 	}
 
-	// Determine templates directory
-	execPath, _ := os.Executable()
-	templatesDir := filepath.Join(filepath.Dir(execPath), "..", "..", "templates")
-	if _, err := os.Stat(templatesDir); os.IsNotExist(err) {
-		// Try relative to working directory
-		templatesDir = "templates"
-	}
-
 	// Create and run generator
-	generator := generate.NewGenerator(spec, opts, templatesDir)
+	generator := generate.NewGenerator(spec, opts)
 	if err := generator.Generate(); err != nil {
 		return fmt.Errorf("generate: %w", err)
 	}

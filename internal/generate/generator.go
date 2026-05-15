@@ -177,7 +177,7 @@ type Generator struct {
 }
 
 // NewGenerator creates a new Generator
-func NewGenerator(spec *openapi.Spec, opts *config.Options, templatesDir string) *Generator {
+func NewGenerator(spec *openapi.Spec, opts *config.Options) *Generator {
 	g := &Generator{
 		Spec:     spec,
 		Options:  opts,
@@ -190,7 +190,7 @@ func NewGenerator(spec *openapi.Spec, opts *config.Options, templatesDir string)
 	g.Globals = NewGlobals(opts)
 
 	// Load templates
-	tm, err := gen.NewTemplateManager(templatesDir, opts.Templates)
+	tm, err := gen.NewTemplateManager(opts.Templates)
 	if err != nil {
 		g.Logger.Warn("Failed to load templates: %v", err)
 	}

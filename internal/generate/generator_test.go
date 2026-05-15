@@ -25,11 +25,6 @@ func findProjectRoot(t *testing.T) string {
 	}
 }
 
-func templatesDir(t *testing.T) string {
-	t.Helper()
-	return filepath.Join(findProjectRoot(t), "templates")
-}
-
 func testSpecPath(t *testing.T, name string) string {
 	t.Helper()
 	return filepath.Join(findProjectRoot(t), "test", name)
@@ -49,7 +44,7 @@ func TestGeneratePetstore30(t *testing.T) {
 		IgnoreUnusedModels: boolPtr(false),
 	}
 
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -223,7 +218,7 @@ func TestGenerateAllTypes(t *testing.T) {
 		Services:  boolPtr(true),
 	}
 
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -294,7 +289,7 @@ func TestGenerateAllOperations(t *testing.T) {
 		Services: boolPtr(true),
 	}
 
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -339,7 +334,7 @@ func TestGenerateEnums(t *testing.T) {
 			Output:    filepath.Join(t.TempDir(), "enums-alias"),
 			EnumStyle: "alias",
 		}
-		gen := NewGenerator(spec, opts, templatesDir(t))
+		gen := NewGenerator(spec, opts)
 		if err := gen.Generate(); err != nil {
 			t.Fatalf("Generate failed: %v", err)
 		}
@@ -364,7 +359,7 @@ func TestGenerateEnums(t *testing.T) {
 			Output:    filepath.Join(t.TempDir(), "enums-upper"),
 			EnumStyle: "upper",
 		}
-		gen := NewGenerator(spec, opts, templatesDir(t))
+		gen := NewGenerator(spec, opts)
 		if err := gen.Generate(); err != nil {
 			t.Fatalf("Generate failed: %v", err)
 		}
@@ -395,7 +390,7 @@ func TestGenerateEnums(t *testing.T) {
 			Output:    filepath.Join(t.TempDir(), "enums-pascal"),
 			EnumStyle: "pascal",
 		}
-		gen := NewGenerator(spec, opts, templatesDir(t))
+		gen := NewGenerator(spec, opts)
 		if err := gen.Generate(); err != nil {
 			t.Fatalf("Generate failed: %v", err)
 		}
@@ -422,7 +417,7 @@ func TestGenerateEnums(t *testing.T) {
 			Output:    filepath.Join(t.TempDir(), "enums-ignorecase"),
 			EnumStyle: "ignorecase",
 		}
-		gen := NewGenerator(spec, opts, templatesDir(t))
+		gen := NewGenerator(spec, opts)
 		if err := gen.Generate(); err != nil {
 			t.Fatalf("Generate failed: %v", err)
 		}
@@ -458,7 +453,7 @@ func TestGenerateObservables(t *testing.T) {
 		Promises: &promises,
 		Services: &services,
 	}
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -490,7 +485,7 @@ func TestGenerateNoServices(t *testing.T) {
 		Services: boolPtr(false),
 	}
 
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -527,7 +522,7 @@ func TestGeneratePetstore31(t *testing.T) {
 		Output: filepath.Join(t.TempDir(), "petstore-3.1"),
 	}
 
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -560,7 +555,7 @@ func TestGenerateNoUnusedModels(t *testing.T) {
 		IgnoreUnusedModels: boolPtr(true),
 	}
 
-	gen := NewGenerator(spec, opts, templatesDir(t))
+	gen := NewGenerator(spec, opts)
 	if err := gen.Generate(); err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
