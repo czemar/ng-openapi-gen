@@ -26,6 +26,8 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
+    permissions:
+      contents: write
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -37,19 +39,24 @@ jobs:
       with:
         go-version: '1.25'
     - name: Build binaries
+      shell: bash
       run: |
-        go build -o ng-openapi-gen-${{ runner.os }}-${{ runner.arch }} ./cmd/ng-openapi-gen
+        binary="ng-openapi-gen-${{ runner.os }}-${{ runner.arch }}"
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          binary="$binary.exe"
+        fi
+        go build -o "$binary" ./cmd/ng-openapi-gen
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
         name: ng-openapi-gen-${{ runner.os }}-${{ runner.arch }}
-        path: ng-openapi-gen-${{ runner.os }}-${{ runner.arch }}
+        path: ng-openapi-gen-*
     - name: Release
       uses: softprops/action-gh-release@v2
       if: ${{ runner.os == 'Linux' }}
       with:
         files: ng-openapi-gen-*-*
-        generate_release_notes: true
+        fail_on_unmatched_files: false
 
   publish-go:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -61,5 +68,5 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.25'
-    - name: Check Go module proxy readiness
+    - name: Verify Go module proxy
       run: GOPROXY=proxy.golang.org,direct go list -m github.com/czemar/ng-openapi-gen@${{ github.ref_name }}
