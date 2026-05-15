@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/schema",
-  "id": "https://github.com/cyclosproject/ng-openapi-gen/blob/master/ng-openapi-gen-schema.json",
+  "id": "https://github.com/czemar/ng-openapi-gen/blob/master/ng-openapi-gen-schema.json",
   "title": "Options for ng-openapi-gen",
   "type": "object",
   "required": [

@@ -1,14 +1,19 @@
 ng-openapi-gen: An OpenAPI 3.0 and 3.1 code generator for Angular
 ---
 
-![Build status](https://github.com/cyclosproject/ng-openapi-gen/workflows/build/badge.svg)
+![Build status](https://github.com/czemar/ng-openapi-gen/workflows/build/badge.svg)
 
-This project is a NPM module that generates model interfaces and web service clients from an [OpenApi 3.0 or 3.1](https://www.openapis.org/)
+This project generates model interfaces and web service clients from an [OpenApi 3.0 or 3.1](https://www.openapis.org/)
 [specification](https://github.com/OAI/OpenAPI-Specification). The generated classes follow the principles of [Angular](https://angular.io/).
 The generated code is compatible with Angular 16+. Support for OpenAPI 3.1 was added since ng-openapi-gen 1.0.
 
+There are two implementations available:
+
+- **Go** (native binary, no dependencies) — recommended for most users
+- **TypeScript / Node.js** (NPM module) — legacy implementation, still maintained
+
 For a generator for [Swagger / OpenAPI 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md), use the
-[ng-swagger-gen](https://github.com/cyclosproject/ng-swagger-gen) instead. Note that ng-swagger-gen has been unmaintained for quite a long time.
+[ng-swagger-gen](https://github.com/czemar/ng-swagger-gen) instead. Note that ng-swagger-gen has been unmaintained for quite a long time.
 
 ## Highlights
 
@@ -61,10 +66,33 @@ their corresponding previous values.
 
 ## Installing and running
 
-You may want to install `ng-openapi-gen` globally or just on your project. Here is an example for a global setup:
+### Go binary (recommended)
+
+Install via Go:
 
 ```bash
-$ npm install -g ng-openapi-gen
+go install github.com/czemar/ng-openapi-gen/cmd/ng-openapi-gen@latest
+```
+
+Or download a pre-built binary from the [releases page](https://github.com/czemar/ng-openapi-gen/releases).
+
+Then run:
+
+```bash
+ng-openapi-gen --input my-api.yaml --output my-app/src/app/api
+```
+
+### NPM module (legacy)
+
+Install globally:
+
+```bash
+npm install -g ng-openapi-gen
+```
+
+Then run:
+
+```bash
 $ ng-openapi-gen --input my-api.yaml --output my-app/src/app/api
 ```
 
@@ -102,7 +130,7 @@ You can even generate code for multiple APIs in a single project, each with its 
 want to customize names, like having a different `configuration` and `apiService` for each API.
 
 For a list with all possible configuration options, see the
-[JSON schema file](https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/master/ng-openapi-gen-schema.json).
+[JSON schema file](https://raw.githubusercontent.com/czemar/ng-openapi-gen/master/ng-openapi-gen-schema.json).
 You can also run `ng-openapi-gen --help` to see all available options.
 Each option in the JSON schema can be passed in as a CLI argument, both in camel case, like `--includeTags tag1,tag2,tag3`, or in kebab
 case, like `--exclude-tags tag1,tag2,tag3`.
@@ -333,12 +361,50 @@ components:
 
 ## Customizing templates
 
-You can customize the Handlebars templates by copying the desired files from the
-[templates](https://github.com/cyclosproject/ng-openapi-gen/tree/master/templates) folder (only the ones you need to customize) to some
-folder in your project, and then reference it in the configuration file.
+Both implementations support custom templates.
+
+### Go (native)
+
+The Go implementation uses [Go text/templates](https://pkg.go.dev/text/template) with `.go.tmpl` files.
+Copy the desired files from the [templates](https://github.com/czemar/ng-openapi-gen/tree/master/templates) folder
+to your project, customize them, and reference the folder in your configuration:
+
+```json
+{
+  "templates": "src/templates"
+}
+```
+
+The following template functions are available in addition to Go's built-ins:
+
+| Function | Description |
+|---|---|
+| `upperFirst` | Capitalizes the first character |
+| `lowerFirst` | Lowercases the first character |
+| `camelCase` | Converts to camelCase |
+| `kebabCase` | Converts to kebab-case |
+| `fileName` | Converts a class name to a kebab-case file name |
+| `typeName` | Converts to a TypeScript type name |
+| `escapeJS` | Escapes a string for JavaScript |
+| `escapeId` | Returns a valid JavaScript identifier |
+| `tsComments` | Formats TypeScript JSDoc comments |
+| `join` | Joins strings with separator |
+| `add` | Integer addition |
+| `seq` | Generates a sequence of integers |
+| `dict` | Creates a map from key-value pairs |
+
+For example, to make objects extend a base interface, copy
+[model.go.tmpl](https://github.com/czemar/ng-openapi-gen/tree/master/templates/model.go.tmpl) to `src/templates`,
+customize it, and set `"templates": "src/templates"` in your config.
+
+### TypeScript / NPM (legacy)
+
+The NPM module uses [Handlebars](https://handlebarsjs.com/) templates with `.handlebars` files.
+Copy the desired files from the [templates](https://github.com/czemar/ng-openapi-gen/tree/master/templates) folder
+to your project, customize them, and reference the folder in your configuration.
 
 For example, to make objects extend a base interface, copy the
-[object.handlebars](https://github.com/cyclosproject/ng-openapi-gen/tree/master/templates) file to your `src/templates` folder. Then, in
+[object.handlebars](https://github.com/czemar/ng-openapi-gen/tree/master/templates) file to your `src/templates` folder. Then, in
 `ng-openapi-gen.json` file, set the following: `"templates": "src/templates"`. Finally, the customized `src/templates/object.handlebars`
 would look like the following (based on the 1.0 version, subject to change in the future):
 
@@ -356,14 +422,11 @@ export interface {{typeName}} extends MyBaseModel {
 }
 ```
 
-## Custom Handlebars helpers
-
-You can integrate your own Handlebar helpers for custom templates. To do so simply provide a `handlebars.js` file in the same directory as
-your templates that exports a function that receives the Handlebars instance that will be used when generating the code from your templates.
+You can also integrate custom Handlebars helpers by providing a `handlebars.js` file in the same directory as
+your templates that exports a function receiving the Handlebars instance:
 
 ```js
 module.exports = function(handlebars) {
-  // Adding a custom handlebars helper: loud
   handlebars.registerHelper('loud', function (aString) {
     return aString.toUpperCase()
   });
@@ -372,18 +435,36 @@ module.exports = function(handlebars) {
 
 ## Developing and contributing
 
-The generator itself is written in TypeScript. When building, the code is transpiled to JavaScript in the `dist` folder. And the `dist`
-folder is the one that gets published to NPM. Even to prevent publishing from the wrong path, the `package.json` file has `"private": true`,
+The generator has two implementations:
+
+### Go implementation (recommended)
+
+The Go code lives in `cmd/` and `internal/`. To build:
+
+```bash
+go build -o ng-openapi-gen ./cmd/ng-openapi-gen
+```
+
+To run tests:
+
+```bash
+go test ./...
+```
+
+The Go implementation supports all configuration options from the `ng-openapi-gen.json` file, plus CLI flags like `--input` / `-i`, `--config` / `-c`, `--output`, `--silent`, `--modelPrefix`, `--modelSuffix`, etc.
+
+### TypeScript / NPM implementation (legacy)
+
+The NPM module is written in TypeScript. When building, the code is transpiled to JavaScript in the `dist` folder.
+The `dist` folder is the one that gets published to NPM. The `package.json` file has `"private": true`,
 which gets replaced by `false` in the build process.
 
-The tests, on the other hand, run on vitest and run directly from TypeScript.
+Tests run on vitest directly from TypeScript.
 
-After developing the changes, to `link` the module and test it with other node projects, run the following:
+To build and link for local testing:
 
 ```bash
 npm run build
 cd dist
 npm link
 ```
-
-At that point, the globally available ng-openapi-gen will be the one compiled to the `dist` folder.

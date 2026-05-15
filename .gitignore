@@ -3,3 +3,12 @@ node_modules
 dist
 out
 .idea
+
+# Go
+ng-openapi-gen
+
+# Generated API
+src/app/api/
+
+# Bun
+bun.lock

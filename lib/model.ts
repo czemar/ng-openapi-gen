@@ -167,7 +167,7 @@ export class Model extends GenType {
   private finalizeAdditionalPropertiesType(): void {
     if (this._additionalPropertiesSchema) {
       // When there are additional properties, we need an union of all types for it.
-      // See https://github.com/cyclosproject/ng-openapi-gen/issues/68
+      // See https://github.com/czemar/ng-openapi-gen/issues/68
       const propTypes = new Set<string>();
       const appendType = (type: string) => {
         if (type.startsWith('null | ')) {
