@@ -56,6 +56,15 @@ func NewOperation(oa *openapi.Spec, path string, pathSpec *openapi.PathItem, met
 		Summary:     spec.Summary,
 	}
 
+	// Apply default tag if no tags specified
+	if len(op.Tags) == 0 {
+		defaultTag := "Api"
+		if opts != nil && opts.DefaultTag != "" {
+			defaultTag = opts.DefaultTag
+		}
+		op.Tags = append(op.Tags, defaultTag)
+	}
+
 	// x-operation-name vendor extension
 	if spec.XOperationName != "" {
 		op.MethodName = spec.XOperationName
@@ -103,7 +112,7 @@ func NewOperation(oa *openapi.Spec, path string, pathSpec *openapi.PathItem, met
 	if spec.RequestBody != nil && (spec.RequestBody.Ref != "" || spec.RequestBody.Description != "" || len(spec.RequestBody.Content) > 0) {
 		rb, err := openapi.ResolveRequestBodyRef(oa, spec.RequestBody)
 		if err == nil && rb != nil {
-			content := op.collectContent(rb.Content)
+			content := op.collectContent(rb.Content, op.contentOrderKey(""))
 			op.RequestBody = NewRequestBody(rb, content, opts)
 			if rb.Required {
 				op.ParametersRequired = true
@@ -184,20 +193,37 @@ func (op *Operation) resolveSecurityScheme(name string) *openapi.SecurityScheme 
 	return nil
 }
 
-func (op *Operation) collectContent(content map[string]openapi.MediaType) []*Content {
-	var result []*Content
-	// Sort keys for deterministic output
+func (op *Operation) collectContent(content map[string]openapi.MediaType, orderKey string) []*Content {
+	// Use spec order if available, otherwise sort for determinism
 	keys := make([]string, 0, len(content))
-	for key := range content {
-		keys = append(keys, key)
+	if op.OpenApi != nil && op.OpenApi.ContentTypeOrder != nil {
+		if ordered, ok := op.OpenApi.ContentTypeOrder[orderKey]; ok {
+			keys = ordered
+		}
 	}
-	sort.Strings(keys)
+	if len(keys) == 0 {
+		for key := range content {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+	}
+	result := make([]*Content, 0, len(keys))
 	for _, mediaType := range keys {
 		mt := content[mediaType]
 		mtCopy := mt
 		result = append(result, NewContent(mediaType, &mtCopy, op.Options, op.OpenApi))
 	}
 	return result
+}
+
+func (op *Operation) contentOrderKey(statusCode string) string {
+	key := "paths." + op.Path + "." + op.Method
+	if statusCode != "" {
+		key += ".responses." + statusCode + ".content"
+	} else {
+		key += ".requestBody.content"
+	}
+	return key
 }
 
 type responseResult struct {
@@ -248,7 +274,7 @@ func (op *Operation) getResponse(rRaw *openapi.RawResponseOrRef, statusCode stri
 	if err != nil || resp == nil {
 		return NewResponse(statusCode, "", nil, op.Options)
 	}
-	content := op.collectContent(resp.Content)
+	content := op.collectContent(resp.Content, op.contentOrderKey(statusCode))
 	return NewResponse(statusCode, resp.Description, content, op.Options)
 }
 
@@ -323,10 +349,20 @@ func (op *Operation) calculateVariants() {
 		}
 	}
 
-	for reqPart, reqContent := range requestVariants {
-		for respPart, respContent := range responseVariants {
+	reqParts := make([]string, 0, len(requestVariants))
+	for k := range requestVariants {
+		reqParts = append(reqParts, k)
+	}
+	sort.Strings(reqParts)
+	respParts := make([]string, 0, len(responseVariants))
+	for k := range responseVariants {
+		respParts = append(respParts, k)
+	}
+	sort.Strings(respParts)
+	for _, reqPart := range reqParts {
+		for _, respPart := range respParts {
 			methodName := op.MethodName + reqPart + respPart
-			v := NewOperationVariant(op, methodName, reqContent, respContent, op.Options)
+			v := NewOperationVariant(op, methodName, requestVariants[reqPart], responseVariants[respPart], op.Options)
 			op.Variants = append(op.Variants, v)
 		}
 	}
@@ -429,8 +465,8 @@ func (op *Operation) Tag() string {
 	if len(op.Tags) > 0 {
 		return op.Tags[0]
 	}
-	if op.Options.DefaultTag != "" {
+	if op.Options != nil && op.Options.DefaultTag != "" {
 		return op.Options.DefaultTag
 	}
-	return "Api"
+	return "operations"
 }

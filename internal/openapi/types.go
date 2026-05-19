@@ -11,6 +11,11 @@ type Spec struct {
 	Tags       []Tag                 `json:"tags,omitempty"`
 	Security   []map[string][]string `json:"security,omitempty"`
 	Webhooks   map[string]any        `json:"webhooks,omitempty"`
+
+	// ContentTypeOrder tracks spec order of content type keys
+	// key: "paths./path.method.responses.status.content" or "paths./path.method.requestBody.content"
+	// e.g. "paths./path3/{id}.delete.responses.200.content"
+	ContentTypeOrder map[string][]string
 }
 
 type Server struct {

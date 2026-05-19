@@ -231,14 +231,24 @@ func buildObjectType(schema *openapi.Schema, opts *config.Options, spec *openapi
 
 	// Additional properties
 	if schema.AdditionalProperties != nil {
-		addPropsType := "any"
-		if addSchema, ok := schema.AdditionalProperties.(map[string]any); ok {
-			// Convert to RawSchemaOrRef
-			// This is handled through templating, simplified here
-			_ = addSchema
+		var addPropsType string
+		if add, ok := schema.AdditionalProperties.(bool); ok && add {
+			addPropsType = "any"
+		} else if addMap, ok := schema.AdditionalProperties.(map[string]any); ok {
+			addSchema := &openapi.Schema{}
+			if t, ok := addMap["type"].(string); ok {
+				addSchema.Type = t
+			}
+			if ref, ok := addMap["$ref"].(string); ok {
+				addSchema.Ref = ref
+			}
+			addPropsType = rawTsType(addSchema, opts, spec, container)
+		} else if addSchema, ok := schema.AdditionalProperties.(openapi.Schema); ok {
+			addPropsType = rawTsType(&addSchema, opts, spec, container)
+		} else {
+			addPropsType = "any"
 		}
-		_ = addPropsType
-		sb.WriteString("  [key: string]: any;\n")
+		sb.WriteString("[key: string]: " + addPropsType + ";\n")
 	}
 
 	sb.WriteString("}")

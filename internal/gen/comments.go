@@ -13,7 +13,7 @@ func TsComments(description string, level int, deprecated ...bool) string {
 		if isDeprecated {
 			return indent + "/** @deprecated */"
 		}
-		return ""
+		return indent
 	}
 
 	lines := strings.Split(strings.TrimSpace(description), "\n")

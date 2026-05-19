@@ -3,17 +3,16 @@ ng-openapi-gen: An OpenAPI 3.0 and 3.1 code generator for Angular
 
 ![Build status](https://github.com/czemar/ng-openapi-gen/workflows/build/badge.svg)
 
+> ‎<br>
+> **This is a Go port of the [ng-openapi-gen](https://www.npmjs.com/package/ng-openapi-gen) NPM package.**<br>
+> ‎
+
 This project generates model interfaces and web service clients from an [OpenApi 3.0 or 3.1](https://www.openapis.org/)
 [specification](https://github.com/OAI/OpenAPI-Specification). The generated classes follow the principles of [Angular](https://angular.io/).
-The generated code is compatible with Angular 16+. Support for OpenAPI 3.1 was added since ng-openapi-gen 1.0.
-
-There are two implementations available:
-
-- **Go** (native binary, no dependencies) — recommended for most users
-- **TypeScript / Node.js** (NPM module) — legacy implementation, still maintained
+The generated code is compatible with Angular 16+.
 
 For a generator for [Swagger / OpenAPI 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md), use the
-[ng-swagger-gen](https://github.com/czemar/ng-swagger-gen) instead. Note that ng-swagger-gen has been unmaintained for quite a long time.
+[ng-swagger-gen](https://github.com/czemar/ng-swagger-gen) instead.
 
 ## Highlights
 
@@ -66,8 +65,6 @@ their corresponding previous values.
 
 ## Installing and running
 
-### Go binary (recommended)
-
 Install via Go:
 
 ```bash
@@ -81,43 +78,6 @@ Then run:
 ```bash
 ng-openapi-gen --input my-api.yaml --output my-app/src/app/api
 ```
-
-### NPM module (legacy)
-
-Install globally:
-
-```bash
-npm install -g ng-openapi-gen
-```
-
-Then run:
-
-```bash
-$ ng-openapi-gen --input my-api.yaml --output my-app/src/app/api
-```
-
-Alternatively you can use the generator directly from within your build-script:
-
-```typescript
-import $RefParser from 'json-schema-ref-parser';
-import { NgOpenApiGen } from 'ng-openapi-gen';
-
-const options = {
-  input: "my-api.json",
-  output: "my-app/src/app/api",
-}
-
-// load the openapi-spec and resolve all $refs
-const RefParser = new $RefParser();
-const openApi = await RefParser.bundle(options.input, {
-  dereference: { circular: false }
-});
-
-const ngOpenGen = new NgOpenApiGen(openApi, options);
-ngOpenGen.generate();
-```
-
-This will expect the file `my-api.yaml` (or `my-api.json`) to be in the current directory, and will generate files on `my-app/src/app/api`.
 
 ## Configuration file and CLI arguments
 
@@ -139,7 +99,7 @@ Here is an example of a configuration file:
 
 ```json
 {
-  "$schema": "node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
+  "$schema": "ng-openapi-gen-schema.json",
   "input": "my-file.json",
   "output": "my-app/src/app/api",
   "ignoreUnusedModels": false
@@ -280,7 +240,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-## Setting up a node script
+## Setting up a build script
 
 It is not a good practice to have generated code committed to the source control system (such as git). The only exception, is for projects
 using a third party API definition that never changes, in which ng-openapi-gen is expected to run only once. To ignore the generator output
@@ -361,10 +321,6 @@ components:
 
 ## Customizing templates
 
-Both implementations support custom templates.
-
-### Go (native)
-
 The Go implementation uses [Go text/templates](https://pkg.go.dev/text/template) with `.go.tmpl` files.
 Copy the desired files from the [templates](https://github.com/czemar/ng-openapi-gen/tree/master/templates) folder
 to your project, customize them, and reference the folder in your configuration:
@@ -397,74 +353,27 @@ For example, to make objects extend a base interface, copy
 [model.go.tmpl](https://github.com/czemar/ng-openapi-gen/tree/master/templates/model.go.tmpl) to `src/templates`,
 customize it, and set `"templates": "src/templates"` in your config.
 
-### TypeScript / NPM (legacy)
-
-The NPM module uses [Handlebars](https://handlebarsjs.com/) templates with `.handlebars` files.
-Copy the desired files from the [templates](https://github.com/czemar/ng-openapi-gen/tree/master/templates) folder
-to your project, customize them, and reference the folder in your configuration.
-
-For example, to make objects extend a base interface, copy the
-[object.handlebars](https://github.com/czemar/ng-openapi-gen/tree/master/templates) file to your `src/templates` folder. Then, in
-`ng-openapi-gen.json` file, set the following: `"templates": "src/templates"`. Finally, the customized `src/templates/object.handlebars`
-would look like the following (based on the 1.0 version, subject to change in the future):
-
-```handlebars
-import { MyBaseModel} from 'src/app/my-base-model';
-
-export interface {{typeName}} extends MyBaseModel {
-{{#properties}}
-{{{tsComments}}}{{{identifier}}}{{^required}}?{{/required}}: {{{type}}};
-{{/properties}}
-{{#additionalPropertiesType}}
-
-  [key: string]: {{{.}}};
-{{/additionalPropertiesType}}
-}
-```
-
-You can also integrate custom Handlebars helpers by providing a `handlebars.js` file in the same directory as
-your templates that exports a function receiving the Handlebars instance:
-
-```js
-module.exports = function(handlebars) {
-  handlebars.registerHelper('loud', function (aString) {
-    return aString.toUpperCase()
-  });
-};
-```
-
 ## Developing and contributing
-
-The generator has two implementations:
-
-### Go implementation (recommended)
 
 The Go code lives in `cmd/` and `internal/`. To build:
 
 ```bash
+make build
+```
+
+To run tests with coverage:
+
+```bash
+make test
+```
+
+Or manually:
+
+```bash
 go build -o ng-openapi-gen ./cmd/ng-openapi-gen
+go test -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+go tool cover -html=coverage.out -o coverage.html
 ```
 
-To run tests:
-
-```bash
-go test ./...
-```
-
-The Go implementation supports all configuration options from the `ng-openapi-gen.json` file, plus CLI flags like `--input` / `-i`, `--config` / `-c`, `--output`, `--silent`, `--modelPrefix`, `--modelSuffix`, etc.
-
-### TypeScript / NPM implementation (legacy)
-
-The NPM module is written in TypeScript. When building, the code is transpiled to JavaScript in the `dist` folder.
-The `dist` folder is the one that gets published to NPM. The `package.json` file has `"private": true`,
-which gets replaced by `false` in the build process.
-
-Tests run on vitest directly from TypeScript.
-
-To build and link for local testing:
-
-```bash
-npm run build
-cd dist
-npm link
-```
+The generator supports all configuration options from the `ng-openapi-gen.json` file, plus CLI flags like `--input` / `-i`, `--config` / `-c`, `--output`, `--silent`, `--modelPrefix`, `--modelSuffix`, etc.

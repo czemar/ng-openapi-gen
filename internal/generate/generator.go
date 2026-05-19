@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/czemar/ng-openapi-gen/internal/config"
@@ -23,20 +24,30 @@ func toMapSlice[T any](items []T) []map[string]any {
 	return result
 }
 
-// toServiceMapSlice converts a map of services to a slice of service maps
+// toServiceMapSlice converts a map of services to a sorted slice of service maps
 func toServiceMapSlice(services map[string]*service.Service) []map[string]any {
+	names := make([]string, 0, len(services))
+	for name := range services {
+		names = append(names, name)
+	}
+	sort.Strings(names)
 	result := make([]map[string]any, 0, len(services))
-	for _, svc := range services {
-		result = append(result, serviceToMap(svc))
+	for _, name := range names {
+		result = append(result, serviceToMap(services[name]))
 	}
 	return result
 }
 
-// toModelMapSlice converts a map of models to a slice of model maps
+// toModelMapSlice converts a map of models to a sorted slice of model maps
 func toModelMapSlice(models map[string]*model.Model) []map[string]any {
+	names := make([]string, 0, len(models))
+	for name := range models {
+		names = append(names, name)
+	}
+	sort.Strings(names)
 	result := make([]map[string]any, 0, len(models))
-	for _, m := range models {
-		result = append(result, modelToMap(m))
+	for _, name := range names {
+		result = append(result, modelToMap(models[name]))
 	}
 	return result
 }
@@ -137,22 +148,23 @@ func NewGlobals(opts *config.Options) *Globals {
 		g.ModuleFile = strings.ReplaceAll(gen.FileName(g.ModuleClass), "-module", ".module")
 	}
 
-	// Indexes
-	if opts.ModelIndex != nil && opts.ModelIndex != false {
+	// Indexes — mirror TypeScript behavior: default to "models"/"functions"/"services"
+	// when the option is nil (not set) or true, skip when explicitly false or empty string
+	if opts.ModelIndex == nil || opts.ModelIndex != false {
 		if s, ok := opts.ModelIndex.(string); ok && s != "" {
 			g.ModelIndexFile = s
 		} else {
 			g.ModelIndexFile = "models"
 		}
 	}
-	if opts.FunctionIndex != nil && opts.FunctionIndex != false {
+	if opts.FunctionIndex == nil || opts.FunctionIndex != false {
 		if s, ok := opts.FunctionIndex.(string); ok && s != "" {
 			g.FunctionIndexFile = s
 		} else {
 			g.FunctionIndexFile = "functions"
 		}
 	}
-	if opts.ServiceIndex != nil && opts.ServiceIndex != false {
+	if opts.ServiceIndex == nil || opts.ServiceIndex != false {
 		if s, ok := opts.ServiceIndex.(string); ok && s != "" {
 			g.ServiceIndexFile = s
 		} else {
@@ -233,7 +245,13 @@ func (g *Generator) Generate() error {
 	g.Logger.Info("Generating %d models and %d services...", len(g.Models), len(g.Services))
 
 	// Write models
-	for _, m := range g.Models {
+	modelNames := make([]string, 0, len(g.Models))
+	for name := range g.Models {
+		modelNames = append(modelNames, name)
+	}
+	sort.Strings(modelNames)
+	for _, name := range modelNames {
+		m := g.Models[name]
 		if err := g.writeTemplate("model", m, m.FileName, "models"); err != nil {
 			return err
 		}
@@ -245,8 +263,15 @@ func (g *Generator) Generate() error {
 	}
 
 	// Collect all functions
+	svcNames := make([]string, 0, len(g.Services))
+	for name := range g.Services {
+		svcNames = append(svcNames, name)
+	}
+	sort.Strings(svcNames)
+
 	var allFunctions []*operation.OperationVariant
-	for _, svc := range g.Services {
+	for _, name := range svcNames {
+		svc := g.Services[name]
 		for _, op := range svc.Operations {
 			for _, variant := range op.Variants {
 				allFunctions = append(allFunctions, variant)
@@ -256,7 +281,8 @@ func (g *Generator) Generate() error {
 
 	// Write functions
 	generateServices := g.Globals.GenerateServices
-	for _, svc := range g.Services {
+	for _, name := range svcNames {
+		svc := g.Services[name]
 		if generateServices {
 			if err := g.writeTemplate("service", svc, svc.FileName, "services"); err != nil {
 				return err
@@ -265,6 +291,7 @@ func (g *Generator) Generate() error {
 	}
 
 	// Deduplicate function export names
+	// (allFunctions is already in deterministic order: sorted services/paths/methods)
 	methodNameCounts := make(map[string]int)
 	for _, fn := range allFunctions {
 		methodNameCounts[fn.MethodName]++
@@ -285,11 +312,13 @@ func (g *Generator) Generate() error {
 	}
 
 	// Build context for general templates (convert to maps for template access)
+	modelSlice := sortedModels(g.Models)
 	ctx := map[string]any{
-		"services":  toServiceMapSlice(g.Services),
-		"models":    toModelMapSlice(g.Models),
-		"functions": toMapSlice(allFunctions),
-		"globals":   g.Globals,
+		"services":   toServiceMapSlice(g.Services),
+		"models":     toModelMapSlice(g.Models),
+		"functions":  toMapSlice(allFunctions),
+		"globals":    g.Globals,
+		"modelIndex": toMap(newModelIndex(modelSlice, g.Options)),
 	}
 
 	// Merge globals into context
@@ -318,7 +347,12 @@ func (g *Generator) Generate() error {
 		if f.skip {
 			continue
 		}
-		if err := g.writeTemplate(f.template, ctx, f.baseName, f.subDir); err != nil {
+		var tmplData any = ctx
+		if f.template == "modelIndex" {
+			// modelIndex template needs modelIndex as a struct, not in map
+			tmplData = ctx["modelIndex"]
+		}
+		if err := g.writeTemplate(f.template, tmplData, f.baseName, f.subDir); err != nil {
 			return err
 		}
 	}
@@ -387,6 +421,11 @@ func (g *Generator) writeTemplate(name string, data any, baseName, subDir string
 		return fmt.Errorf("apply template %s: %w", name, err)
 	}
 
+	// Ensure the output ends with a newline (standard text file convention)
+	if !strings.HasSuffix(ts, "\n") {
+		ts += "\n"
+	}
+
 	dir := g.TempDir
 	if subDir != "" {
 		dir = filepath.Join(g.TempDir, subDir)
@@ -402,6 +441,20 @@ func (g *Generator) writeTemplate(name string, data any, baseName, subDir string
 	return nil
 }
 
+// sortedModels returns a sorted slice of models from the map
+func sortedModels(models map[string]*model.Model) []*model.Model {
+	names := make([]string, 0, len(models))
+	for name := range models {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	result := make([]*model.Model, len(names))
+	for i, name := range names {
+		result[i] = models[name]
+	}
+	return result
+}
+
 // ModelIndex is used for generating model index files
 type ModelIndex struct {
 	Imports    []*gen.Import
@@ -414,7 +467,7 @@ func newModelIndex(models []*model.Model, opts *config.Options) *ModelIndex {
 	}
 	imps := gen.NewImports(opts, "")
 	for _, m := range models {
-		imps.Add(m.TypeName, !m.IsEnum)
+		imps.Add(m.Name, !m.IsEnum)
 	}
 	mi.Imports = imps.ToArray()
 	for _, imp := range mi.Imports {
@@ -468,7 +521,15 @@ func (g *Generator) readServices() {
 	seenIDs := make(map[string]int)
 
 	if g.Spec.Paths != nil {
-		for path, pathSpec := range g.Spec.Paths {
+		// Sort paths for deterministic output
+		sortedPaths := make([]string, 0, len(g.Spec.Paths))
+		for path := range g.Spec.Paths {
+			sortedPaths = append(sortedPaths, path)
+		}
+		sort.Strings(sortedPaths)
+
+		for _, path := range sortedPaths {
+			pathSpec := g.Spec.Paths[path]
 			if pathSpec == nil {
 				continue
 			}
@@ -515,7 +576,15 @@ func (g *Generator) readServices() {
 		includeTags := g.Options.IncludeTags
 		excludeTags := g.Options.ExcludeTags
 
-		for tagName, ops := range opsByTag {
+		// Sort tags for deterministic output
+		sortedTags := make([]string, 0, len(opsByTag))
+		for tag := range opsByTag {
+			sortedTags = append(sortedTags, tag)
+		}
+		sort.Strings(sortedTags)
+
+		for _, tagName := range sortedTags {
+			ops := opsByTag[tagName]
 			if len(includeTags) > 0 && !contains(includeTags, tagName) {
 				g.Logger.Info("Ignoring tag %s because it is not listed in the 'includeTags' option", tagName)
 				continue
@@ -583,14 +652,14 @@ func (g *Generator) ignoreUnusedModels() {
 	for _, svc := range g.Services {
 		for _, imp := range svc.Imports {
 			if strings.Contains(imp.Path, "models/") {
-				usedNames[imp.TypeName] = true
+				usedNames[imp.Name] = true
 			}
 		}
 		for _, op := range svc.Operations {
 			for _, variant := range op.Variants {
 				for _, imp := range variant.Imports {
 					if strings.Contains(imp.Path, "models/") {
-						usedNames[imp.TypeName] = true
+						usedNames[imp.Name] = true
 					}
 				}
 			}

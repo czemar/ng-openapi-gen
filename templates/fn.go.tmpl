@@ -11,7 +11,7 @@ import { {{.requestBuilderClass}} } from '{{.pathToRoot}}{{.requestBuilderFile}}
 {{end}}
 export interface {{.paramsType}} {
 {{range .operation.parameters}}{{.tsComments}}  {{.var}}{{if not .required}}?{{end}}: {{.type}};
-{{end}}{{if .requestBody}}  {{.operation.requestBody.tsComments}}body{{if not .operation.requestBody.required}}?{{end}}: {{.requestBody.type}};
+{{end}}{{if .requestBody}}  {{.operation.requestBody.tsComments}}body{{if not .operation.requestBody.required}}?{{end}}: {{.requestBody.type}}
 {{end}}}
 
 export function {{.importName}}(http: HttpClient, rootUrl: string, params{{if not .operation.parametersRequired}}?{{end}}: {{.paramsType}}, context?: HttpContext): Observable<{{.responseClass}}<{{.resultType}}>> {

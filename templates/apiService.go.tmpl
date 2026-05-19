@@ -46,11 +46,11 @@ export class {{.apiServiceClass}} {
   invoke<P, R>(fn: ApiFnOptional<P, R>, params?: P, context?: HttpContext): {{if .promises}}Promise<R>{{else}}Observable<R>{{end}};
   {{if .promises}}async {{end}}invoke<P, R>(fn: ApiFnRequired<P, R> | ApiFnOptional<P, R>, params: P, context?: HttpContext): {{if .promises}}Promise<R>{{else}}Observable<R>{{end}} {
     const resp = this.invoke$Response(fn, params, context);
-    {{if .promises}}
+{{- if .promises}}
     return (await resp).body;
-    {{else}}
+{{- else}}
     return resp.pipe(map(r => r.body));
-    {{end}}
+{{- end}}
   }
 
   /**
@@ -63,10 +63,10 @@ export class {{.apiServiceClass}} {
       .pipe(
         filter(r => r instanceof HttpResponse),
         map(r => r as StrictHttpResponse<R>));
-    {{if .promises}}
+{{- if .promises}}
     return firstValueFrom(obs);
-    {{else}}
+{{- else}}
     return obs;
-    {{end}}
+{{- end}}
   }
 }

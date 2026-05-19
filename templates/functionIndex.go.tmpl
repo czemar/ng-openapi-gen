@@ -3,4 +3,5 @@
 
 {{range .functions}}export type { {{.paramsType}} as {{.paramsTypeExportName}} } from './{{.importPath}}/{{.importFile}}';
 export { {{.importName}} as {{.exportName}} } from './{{.importPath}}/{{.importFile}}';
-{{end}}
+{{end -}}
+

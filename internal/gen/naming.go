@@ -193,7 +193,7 @@ func splitIntoWords(s string) []string {
 
 	runes := []rune(s)
 	for i, r := range runes {
-		if r == '_' || r == ' ' || r == '-' {
+		if r == '_' || r == ' ' || r == '-' || r == '$' {
 			if current.Len() > 0 {
 				words = append(words, current.String())
 				current.Reset()
@@ -201,6 +201,12 @@ func splitIntoWords(s string) []string {
 			continue
 		}
 		if unicode.IsUpper(r) && i > 0 && (unicode.IsLower(rune(runes[i-1])) || (i+1 < len(runes) && unicode.IsLower(rune(runes[i+1])))) {
+			if current.Len() > 0 {
+				words = append(words, current.String())
+				current.Reset()
+			}
+		}
+		if i > 0 && unicode.IsDigit(r) != unicode.IsDigit(rune(runes[i-1])) {
 			if current.Len() > 0 {
 				words = append(words, current.String())
 				current.Reset()

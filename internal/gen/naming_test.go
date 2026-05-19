@@ -267,7 +267,7 @@ func TestEnumName(t *testing.T) {
 		{"vanilla", "ignorecase", "vanilla"},
 		{"StrawBerry", "ignorecase", "StrawBerry"},
 		{"cookie dough", "ignorecase", "cookie_dough"},
-		{"123abc", "alias", "$123abc"},
+		{"123abc", "alias", "$123Abc"},
 	}
 	for _, tt := range tests {
 		opts := &config.Options{EnumStyle: tt.style}

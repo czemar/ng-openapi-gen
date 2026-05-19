@@ -6,6 +6,8 @@ out
 
 # Go
 /ng-openapi-gen
+coverage.out
+coverage.html
 
 # Generated API
 src/app/api/

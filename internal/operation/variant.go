@@ -45,8 +45,8 @@ type variantImport struct {
 }
 
 func (v *variantImport) GetImportName() string          { return v.ImportName }
-func (v *variantImport) GetImportPath() string          { return v.ImportFile }
-func (v *variantImport) GetImportFile() string          { return v.ImportPath }
+func (v *variantImport) GetImportPath() string          { return v.ImportPath }
+func (v *variantImport) GetImportFile() string          { return v.ImportFile }
 func (v *variantImport) GetImportTypeName() string      { return v.ImportTypeName }
 func (v *variantImport) GetImportQualifiedName() string { return v.ImportQualifiedName }
 
@@ -149,7 +149,7 @@ func (v *OperationVariant) Tag() string {
 	if len(v.Operation.Tags) > 0 {
 		return v.Operation.Tags[0]
 	}
-	if v.Options.DefaultTag != "" {
+	if v.Options != nil && v.Options.DefaultTag != "" {
 		return v.Options.DefaultTag
 	}
 	return "Api"

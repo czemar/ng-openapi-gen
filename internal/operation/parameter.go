@@ -1,7 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/czemar/ng-openapi-gen/internal/config"
@@ -51,13 +50,25 @@ func NewParameter(spec *openapi.Parameter, opts *config.Options, oa *openapi.Spe
 }
 
 func (p *Parameter) createParameterOptions() string {
-	opts := make(map[string]any)
+	var buf strings.Builder
+	buf.WriteByte('{')
+	first := true
 	if p.Style != "" {
-		opts["style"] = p.Style
+		buf.WriteString(`"style":"`)
+		buf.WriteString(p.Style)
+		buf.WriteByte('"')
+		first = false
 	}
 	if p.Explode != nil {
-		opts["explode"] = *p.Explode
+		if !first {
+			buf.WriteByte(',')
+		}
+		if *p.Explode {
+			buf.WriteString(`"explode":true`)
+		} else {
+			buf.WriteString(`"explode":false`)
+		}
 	}
-	data, _ := json.Marshal(opts)
-	return string(data)
+	buf.WriteByte('}')
+	return buf.String()
 }

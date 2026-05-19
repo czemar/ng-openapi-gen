@@ -6,7 +6,7 @@ export { {{.requestBuilderClass}} } from './{{.requestBuilderFile}}';
 export type { {{.responseClass}} } from './{{.responseFile}}';
 {{if .apiServiceClass}}export { {{.apiServiceClass}} } from './{{.apiServiceFile}}';{{end}}
 {{if .moduleClass}}export { {{.moduleClass}} } from './{{.moduleFile}}';{{end}}
-{{range .modelIndex.imports}}export {{if .typeOnly}}type {{end}}{ {{.typeName}}{{if .useAlias}} as {{.qualifiedName}}{{end}} } from './models{{.file}}';
+{{range .modelIndex.imports}}export {{if .typeOnly}}type {{end}}{ {{.typeName}}{{if .useAlias}} as {{.qualifiedName}}{{end}} } from '{{.path}}{{.file}}';
 {{end}}
 {{if .generateServices}}export { {{.baseServiceClass}} } from './{{.baseServiceFile}}';
 {{range .services}}export { {{.typeName}} } from './services/{{.fileName}}';

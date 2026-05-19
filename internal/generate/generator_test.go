@@ -1,6 +1,8 @@
 package generate
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -316,7 +318,7 @@ func TestGenerateAllOperations(t *testing.T) {
 	outDir := gen.OutDir
 
 	// Check the path4-put variants (multi-content-type)
-	matches, _ := filepath.Glob(filepath.Join(outDir, "fn", "api", "path4-put*.ts"))
+	matches, _ := filepath.Glob(filepath.Join(outDir, "fn", "api", "path-4-put*.ts"))
 	if len(matches) == 0 {
 		t.Errorf("expected path4-put variant files, got none")
 	}
@@ -587,4 +589,192 @@ func assertNoNoValue(t *testing.T, dir string) {
 
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+// TestGoldenFiles regenerates output from each config and compares against the
+// expected output in the out/ directory. This catches regressions where the
+// generated output changes unexpectedly.
+func TestGoldenFiles(t *testing.T) {
+	projectRoot := findProjectRoot(t)
+
+	type goldenCase struct {
+		name       string
+		configPath string // absolute path to .config.json
+		specPath   string // absolute path to OpenAPI spec
+		expectDir  string // absolute path to expected out/ dir
+	}
+
+	var cases []goldenCase
+
+	// Configs with "input" pointing to a file name (no "test/" prefix) → spec
+	// lives in test/<name>. Configs with "test/" prefix → the input is already
+	// relative to the project root (test/<name>).
+	configDir := filepath.Join(projectRoot, "test")
+	expectedBase := filepath.Join(projectRoot, "out")
+
+	configFiles, err := filepath.Glob(filepath.Join(configDir, "*.config.json"))
+	if err != nil {
+		t.Fatalf("glob configs: %v", err)
+	}
+
+	for _, cf := range configFiles {
+		opts, err := config.LoadOptions(cf)
+		if err != nil || opts.Output == "" {
+			continue
+		}
+
+		// Resolve the output directory (strip trailing slash)
+		outRel := strings.TrimRight(opts.Output, "/")
+		expectDir := filepath.Join(expectedBase, filepath.Base(outRel))
+
+		if _, err := os.Stat(expectDir); os.IsNotExist(err) {
+			continue
+		}
+
+		// Resolve the input spec path
+		input := opts.Input
+		var specPath string
+		if strings.HasPrefix(input, "test/") {
+			specPath = filepath.Join(projectRoot, input)
+		} else {
+			specPath = filepath.Join(configDir, input)
+		}
+
+		name := strings.TrimSuffix(filepath.Base(cf), ".config.json")
+
+		// Skip scenarios with broken/missing spec files or incompatible features
+		switch name {
+		case "templates": // Different template engine (Handlebars vs Go templates)
+			continue
+		case "camelize-model-names": // Referenced spec (keep-model-names.json) does not exist
+			continue
+		case "self-ref": // Referenced spec (self-ref-array.json) does not exist
+			continue
+		case "openapi31-jsonschema": // Parser cannot handle some 3.1 JSON Schema features (bool in items)
+			continue
+		}
+
+		cases = append(cases, goldenCase{
+			name:       name,
+			configPath: cf,
+			specPath:   specPath,
+			expectDir:  expectDir,
+		})
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts, err := config.LoadOptions(tc.configPath)
+			if err != nil {
+				t.Fatalf("LoadOptions(%s): %v", tc.configPath, err)
+			}
+
+			opts.Input = tc.specPath
+			opts.Output = t.TempDir()
+
+			spec, err := openapi.ParseSpec(tc.specPath)
+			if err != nil {
+				t.Fatalf("ParseSpec(%s): %v", tc.specPath, err)
+			}
+
+			gen := NewGenerator(spec, opts)
+			if err := gen.Generate(); err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+
+			fmt.Printf("Generated output: %s\n", gen.OutDir)
+			// Debug: print generated file contents
+			for _, name := range []string{"api.ts", "api-configuration.ts", "models.ts", "functions.ts", "models/petstore-pet-model.ts", "models/petstore-pets-model.ts"} {
+				data, err := os.ReadFile(filepath.Join(gen.OutDir, name))
+				if err == nil {
+					fmt.Printf("--- %s ---\n%s", name, string(data))
+				}
+			}
+			diff := diffDirs(t, tc.expectDir, gen.OutDir)
+			if diff != "" {
+				t.Errorf("Output mismatch:\n%s", diff)
+			}
+		})
+	}
+}
+
+// diffDirs compares two directories recursively and returns a description of
+// all differences, or empty string if they are identical.
+func diffDirs(t *testing.T, expected, actual string) string {
+	t.Helper()
+
+	expectedFiles := make(map[string]string) // relPath -> absPath
+	actualFiles := make(map[string]string)
+
+	walk := func(root string, dest map[string]string) {
+		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+			rel, _ := filepath.Rel(root, path)
+			dest[rel] = path
+			return nil
+		})
+	}
+
+	walk(expected, expectedFiles)
+	walk(actual, actualFiles)
+
+	var sb strings.Builder
+
+	for rel := range expectedFiles {
+		if _, ok := actualFiles[rel]; !ok {
+			sb.WriteString(fmt.Sprintf("  missing: %s\n", rel))
+		}
+	}
+	for rel := range actualFiles {
+		if _, ok := expectedFiles[rel]; !ok {
+			sb.WriteString(fmt.Sprintf("  extra:   %s\n", rel))
+		}
+	}
+
+	for rel, expPath := range expectedFiles {
+		actPath, ok := actualFiles[rel]
+		if !ok {
+			continue
+		}
+		expData, err := os.ReadFile(expPath)
+		if err != nil {
+			sb.WriteString(fmt.Sprintf("  read error (%s): %v\n", rel, err))
+			continue
+		}
+		actData, err := os.ReadFile(actPath)
+		if err != nil {
+			sb.WriteString(fmt.Sprintf("  read error (%s): %v\n", rel, err))
+			continue
+		}
+		if !bytes.Equal(expData, actData) {
+			sb.WriteString(fmt.Sprintf("  differ:  %s\n", rel))
+			// Show line-level diff for debugging
+			expLines := strings.Split(string(expData), "\n")
+			actLines := strings.Split(string(actData), "\n")
+			max := len(expLines)
+			if len(actLines) > max {
+				max = len(actLines)
+			}
+			for i := 0; i < max; i++ {
+				var e, a string
+				if i < len(expLines) {
+					e = expLines[i]
+				}
+				if i < len(actLines) {
+					a = actLines[i]
+				}
+				if e != a {
+					sb.WriteString(fmt.Sprintf("    line %d:\n      -%s\n      +%s\n", i+1, e, a))
+					break // show first difference only
+				}
+			}
+		}
+	}
+
+	return sb.String()
 }

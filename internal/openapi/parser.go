@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -29,7 +30,199 @@ func ParseSpec(path string) (*Spec, error) {
 			return nil, fmt.Errorf("parse JSON: %w", err)
 		}
 	}
+
+	// Extract content type order from raw JSON
+	spec.ContentTypeOrder = extractContentTypeOrder(data)
 	return &spec, nil
+}
+
+// extractContentTypeOrder walks raw JSON and records content type key order.
+func extractContentTypeOrder(data []byte) map[string][]string {
+	result := make(map[string][]string)
+
+	var jsonData []byte
+	if isJSON(data) {
+		jsonData = data
+	} else {
+		// For YAML, convert to JSON first
+		var yamlData any
+		if err := yaml.Unmarshal(data, &yamlData); err != nil {
+			return result
+		}
+		var err error
+		jsonData, err = json.Marshal(yamlData)
+		if err != nil {
+			return result
+		}
+	}
+
+	// Parse into generic structure
+	var root map[string]any
+	if err := json.Unmarshal(jsonData, &root); err != nil {
+		return result
+	}
+
+	// Walk paths
+	paths, _ := root["paths"].(map[string]any)
+	for pathKey := range paths {
+		pathItem, _ := paths[pathKey].(map[string]any)
+		for _, method := range []string{"get", "put", "post", "delete", "options", "head", "patch", "trace"} {
+			op, _ := pathItem[method].(map[string]any)
+			if op == nil {
+				continue
+			}
+			base := "paths." + pathKey + "." + method
+
+			// Extract from responses
+			if responses, _ := op["responses"].(map[string]any); responses != nil {
+				for statusCode := range responses {
+					resp, _ := responses[statusCode].(map[string]any)
+					if resp == nil {
+						continue
+					}
+					if content, _ := resp["content"].(map[string]any); content != nil {
+						contentKey := base + ".responses." + statusCode + ".content"
+						keys := orderedKeysFromJSON(jsonData, contentKey)
+						if len(keys) > 0 {
+							result[contentKey] = keys
+						}
+					}
+				}
+			}
+
+			// Extract from requestBody
+			if rb, _ := op["requestBody"].(map[string]any); rb != nil {
+				if content, _ := rb["content"].(map[string]any); content != nil {
+					contentKey := base + ".requestBody.content"
+					keys := orderedKeysFromJSON(jsonData, contentKey)
+					if len(keys) > 0 {
+						result[contentKey] = keys
+					}
+				}
+			}
+		}
+	}
+
+	return result
+}
+
+// orderedKeysFromJSON extracts the ordered keys of a nested object from raw JSON.
+// The path is dot-separated, e.g. "paths./path3/{id}.delete.responses.200.content"
+func orderedKeysFromJSON(data []byte, path string) []string {
+	parts := strings.Split(path, ".")
+	dec := json.NewDecoder(bytes.NewReader(data))
+
+	// Skip the opening { of the root object
+	firstTok, err := dec.Token()
+	if err != nil {
+		return nil
+	}
+	if _, ok := firstTok.(json.Delim); !ok {
+		return nil
+	}
+
+	return findOrderedKeys(dec, parts)
+}
+
+// findOrderedKeys recursively walks JSON following path parts, collecting keys at the final part.
+func findOrderedKeys(dec *json.Decoder, parts []string) []string {
+	if len(parts) == 0 {
+		return nil
+	}
+	part := parts[0]
+	isLast := len(parts) == 1
+
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return nil
+		}
+		key, ok := tok.(string)
+		if !ok {
+			return nil
+		}
+
+		// Read the value
+		valueTok, err := dec.Token()
+		if err != nil {
+			return nil
+		}
+
+		if key == part {
+			if isLast {
+				// Collect keys from the value object
+				if delim, ok := valueTok.(json.Delim); ok && delim == '{' {
+					return collectObjectKeys(dec)
+				}
+				return nil
+			}
+			// Descend into this object
+			if delim, ok := valueTok.(json.Delim); ok && delim == '{' {
+				return findOrderedKeys(dec, parts[1:])
+			}
+			return nil
+		}
+
+		// Skip non-matching values
+		skipValue(dec, valueTok)
+	}
+
+	// Consume closing delimiter (shouldn't reach here for valid JSON)
+	dec.Token()
+	return nil
+}
+
+// collectObjectKeys reads all keys from a JSON object (assumes opening { already consumed)
+func collectObjectKeys(dec *json.Decoder) []string {
+	var keys []string
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return keys
+		}
+		key, ok := tok.(string)
+		if !ok {
+			return keys
+		}
+		keys = append(keys, key)
+
+		// Skip the value
+		valueTok, err := dec.Token()
+		if err != nil {
+			return keys
+		}
+		skipValue(dec, valueTok)
+	}
+	dec.Token() // consume closing }
+	return keys
+}
+
+// skipValue skips a JSON value, handling nested objects/arrays
+func skipValue(dec *json.Decoder, tok json.Token) {
+	if delim, ok := tok.(json.Delim); ok {
+		switch delim {
+		case '{':
+			for dec.More() {
+				// Skip key
+				dec.Token()
+				// Skip value
+				valTok, _ := dec.Token()
+				skipValue(dec, valTok)
+			}
+			dec.Token() // consume closing }
+		case '[':
+			for dec.More() {
+				elemTok, _ := dec.Token()
+				skipValue(dec, elemTok)
+			}
+			dec.Token() // consume closing ]
+		}
+	}
+}
+
+func isJSON(data []byte) bool {
+	data = bytes.TrimSpace(data)
+	return len(data) > 0 && data[0] == '{'
 }
 
 // ResolveRef resolves a $ref string against the spec

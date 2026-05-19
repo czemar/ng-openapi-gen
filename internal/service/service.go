@@ -118,10 +118,6 @@ func (s *Service) collectFromSchema(schema *openapi.Schema, additional bool) {
 func (s *Service) updateImports() {
 	s.PathToRoot = "../"
 	s.Imports = s.ImportSet.ToArray()
-	for _, imp := range s.Imports {
-		imp.Path = s.PathToRoot + "models/"
-		imp.FullPath = "models/" + imp.File
-	}
 }
 
 // GetImportName implements Importable

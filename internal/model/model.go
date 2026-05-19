@@ -52,7 +52,7 @@ func NewModel(oa *openapi.Spec, name string, schema *openapi.Schema, opts *confi
 		Options:    opts,
 		TypeName:   gen.UnqualifiedName(name, opts),
 		Namespace:  gen.Namespace(name),
-		ImportSet:  gen.NewImports(opts, gen.UnqualifiedName(name, opts)),
+		ImportSet:  gen.NewImports(opts, name),
 		Properties: nil,
 	}
 
@@ -132,13 +132,13 @@ func NewModel(oa *openapi.Spec, name string, schema *openapi.Schema, opts *confi
 
 	if m.IsObject {
 		for _, prop := range m.Properties {
-			prop.ResolveType(opts, oa, m.TypeName)
+			prop.ResolveType(opts, oa, m.Name)
 		}
 		m.finalizeAdditionalPropertiesType()
 	}
 
 	if m.IsSimple {
-		m.SimpleType = gen.TsType(&openapi.RawSchemaOrRef{Schema: *schema}, opts, oa, m.TypeName)
+		m.SimpleType = gen.TsType(&openapi.RawSchemaOrRef{Schema: *schema}, opts, oa, m.Name)
 	}
 
 	return m
@@ -203,7 +203,7 @@ func (m *Model) finalizeAdditionalPropertiesType() {
 		}
 	}
 
-	addType := gen.TsType(&openapi.RawSchemaOrRef{Schema: *m.additionalPropertiesSchema}, m.Options, m.OpenApi, m.TypeName)
+	addType := gen.TsType(&openapi.RawSchemaOrRef{Schema: *m.additionalPropertiesSchema}, m.Options, m.OpenApi, m.Name)
 	appendType(addType)
 
 	types := make([]string, 0, len(propTypes))
@@ -267,7 +267,7 @@ func (m *Model) collectImportsFromSchema(schema *openapi.Schema) {
 func (m *Model) updateImports() {
 	m.PathToRoot = "../"
 	if m.Namespace != "" {
-		depth := strings.Count(m.Namespace, "/") + 1
+		depth := strings.Count(m.Namespace, "/") + 2
 		m.PathToRoot = strings.Repeat("../", depth)
 	}
 	m.Imports = m.ImportSet.ToArray()

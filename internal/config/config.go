@@ -261,6 +261,24 @@ func applyOverride(opts *Options, key, value string) {
 		opts.ExcludePaths = splitAndTrim(value)
 	case "excludeParameters":
 		opts.ExcludeParameters = splitAndTrim(value)
+	case "promises":
+		b := value == "true"
+		opts.Promises = &b
+	case "services":
+		b := value == "true"
+		opts.Services = &b
+	case "ignoreUnusedModels":
+		b := value == "true"
+		opts.IgnoreUnusedModels = &b
+	case "camelizeModelNames":
+		b := value == "true"
+		opts.CamelizeModelNames = &b
+	case "enumArray":
+		b := value == "true"
+		opts.EnumArray = &b
+	case "removeStaleFiles":
+		b := value == "true"
+		opts.RemoveStaleFiles = &b
 	}
 }
 

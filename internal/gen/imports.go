@@ -35,6 +35,7 @@ type Imports struct {
 	items           map[string]*Import
 	options         *config.Options
 	currentTypeName string
+	currentRefName  string
 }
 
 // NewImports creates a new import manager
@@ -42,7 +43,8 @@ func NewImports(opts *config.Options, currentTypeName string) *Imports {
 	return &Imports{
 		items:           make(map[string]*Import),
 		options:         opts,
-		currentTypeName: currentTypeName,
+		currentRefName:  currentTypeName,
+		currentTypeName: UnqualifiedName(currentTypeName, opts),
 	}
 }
 
@@ -70,7 +72,7 @@ func (m *Imports) AddRef(sRaw *openapi.RawSchemaOrRef, typeOnly bool, spec *open
 	}
 	if sRaw.Ref != "" {
 		name := SimpleName(sRaw.Ref)
-		if m.currentTypeName != name {
+		if name != m.currentRefName {
 			m.Add(name, typeOnly)
 		}
 	} else {
