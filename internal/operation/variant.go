@@ -23,6 +23,7 @@ type OperationVariant struct {
 	IsNumber                 bool
 	IsBoolean                bool
 	IsOther                  bool
+	IsEventStream            bool
 	ResponseMethodTsComments string
 	BodyMethodTsComments     string
 	ParamsType               string
@@ -67,6 +68,7 @@ func NewOperationVariant(op *Operation, methodName string, reqBody, successResp 
 		v.ResultType = successResp.Type
 		v.ResponseType = v.inferResponseType(successResp, op)
 		v.Accept = successResp.MediaType
+		v.IsEventStream = strings.Contains(strings.ToLower(successResp.MediaType), "event-stream")
 	} else {
 		v.ResultType = "void"
 		v.ResponseType = "text"

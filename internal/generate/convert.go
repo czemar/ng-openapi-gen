@@ -73,6 +73,7 @@ func variantToMap(v *operation.OperationVariant) map[string]any {
 		"isNumber":                 v.IsNumber,
 		"isBoolean":                v.IsBoolean,
 		"isOther":                  v.IsOther,
+		"isEventStream":            v.IsEventStream,
 		"responseMethodTsComments": v.ResponseMethodTsComments,
 		"bodyMethodTsComments":     v.BodyMethodTsComments,
 		"paramsType":               v.ParamsType,

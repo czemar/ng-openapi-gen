@@ -86,6 +86,32 @@
           }
         }
       }
+    },
+    "/events": {
+      "get": {
+        "operationId": "getEventStream",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events stream",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventMessage"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -201,6 +227,20 @@
           "unionNumber": {
             "type": ["integer", "number"],
             "description": "Can be integer or float"
+          }
+        }
+      },
+      "EventMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string"
           }
         }
       },
