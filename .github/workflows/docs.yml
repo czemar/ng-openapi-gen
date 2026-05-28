@@ -19,22 +19,24 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
     steps:
       - uses: actions/checkout@v4
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-      - name: Install Jekyll
-        run: gem install jekyll just-the-docs
+          bundler-cache: true
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
-        run: jekyll build --source docs --destination _site
+        run: bundle exec jekyll build --source . --destination ${{ runner.temp }}/_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./_site
+          path: ${{ runner.temp }}/_site
 
   deploy:
     environment:
