@@ -19,8 +19,14 @@ func ParseSpec(path string) (*Spec, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ParseSpecBytes(data, path)
+}
 
-	ext := strings.ToLower(filepath.Ext(path))
+// ParseSpecBytes parses OpenAPI spec bytes (JSON or YAML) without file I/O.
+// The filename hint is used only to determine format; use any name with the
+// correct extension, or an empty string to default to JSON.
+func ParseSpecBytes(data []byte, filenameHint string) (*Spec, error) {
+	ext := strings.ToLower(filepath.Ext(filenameHint))
 	var spec Spec
 	switch ext {
 	case ".yaml", ".yml":

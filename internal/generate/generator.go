@@ -189,6 +189,9 @@ type Generator struct {
 	Models    map[string]*model.Model
 	Services  map[string]*service.Service
 	TemplateM *gen.TemplateManager
+	// Files, when non-nil, captures generated file contents in-memory instead of
+	// writing to disk. Used by the WASM demo.
+	Files map[string][]byte
 }
 
 // NewGenerator creates a new Generator
@@ -238,12 +241,16 @@ func NewGenerator(spec *openapi.Spec, opts *config.Options) *Generator {
 
 // Generate executes code generation
 func (g *Generator) Generate() error {
-	// Clean and create temp directory
-	os.RemoveAll(g.TempDir)
-	if err := os.MkdirAll(g.TempDir, 0755); err != nil {
-		return fmt.Errorf("create temp dir: %w", err)
+	useMemFS := g.Files != nil
+
+	if !useMemFS {
+		// Clean and create temp directory
+		os.RemoveAll(g.TempDir)
+		if err := os.MkdirAll(g.TempDir, 0755); err != nil {
+			return fmt.Errorf("create temp dir: %w", err)
+		}
+		defer os.RemoveAll(g.TempDir)
 	}
-	defer os.RemoveAll(g.TempDir)
 
 	g.Logger.Info("Generating %d models and %d services...", len(g.Models), len(g.Services))
 
@@ -361,8 +368,10 @@ func (g *Generator) Generate() error {
 	}
 
 	// Sync temp to output
-	if err := g.syncDirs(); err != nil {
-		return fmt.Errorf("sync directories: %w", err)
+	if !useMemFS {
+		if err := g.syncDirs(); err != nil {
+			return fmt.Errorf("sync directories: %w", err)
+		}
 	}
 
 	g.Logger.Info("Generation finished with %d models and %d services.", len(g.Models), len(g.Services))
@@ -427,6 +436,16 @@ func (g *Generator) writeTemplate(name string, data any, baseName, subDir string
 	// Ensure the output ends with a newline (standard text file convention)
 	if !strings.HasSuffix(ts, "\n") {
 		ts += "\n"
+	}
+
+	// Capture in memory when Files map is set (WASM demo mode)
+	if g.Files != nil {
+		filePath := baseName + ".ts"
+		if subDir != "" {
+			filePath = subDir + "/" + filePath
+		}
+		g.Files[filePath] = []byte(ts)
+		return nil
 	}
 
 	dir := g.TempDir

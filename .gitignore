@@ -25,5 +25,8 @@ public/
 docs/public/
 .hugo_build.lock
 
+# WASM demo binary (built in CI)
+docs/static/demo/demo.wasm
+
 # Temp
 tmp/
