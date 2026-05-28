@@ -1,34 +1,13 @@
 package service
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/czemar/ng-openapi-gen/internal/config"
 	"github.com/czemar/ng-openapi-gen/internal/openapi"
 	"github.com/czemar/ng-openapi-gen/internal/operation"
+	"github.com/czemar/ng-openapi-gen/internal/testutil"
 )
-
-func findProjectRoot(t *testing.T) string {
-	t.Helper()
-	dir, _ := os.Getwd()
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("could not find project root")
-		}
-		dir = parent
-	}
-}
-
-func testSpec(t *testing.T, name string) string {
-	t.Helper()
-	return filepath.Join(findProjectRoot(t), "test", name)
-}
 
 func testOpts() *config.Options {
 	return &config.Options{
@@ -44,37 +23,17 @@ func newTestOperation(t *testing.T, spec *openapi.Spec, path, method, id string)
 	if pathSpec == nil {
 		t.Fatalf("path %s not found", path)
 	}
-	opSpec := getMethodOperation(pathSpec, method)
+	opSpec := openapi.GetMethodOperation(pathSpec, method)
 	if opSpec == nil {
 		t.Fatalf("%s %s not found", method, path)
 	}
 	return operation.NewOperation(spec, path, pathSpec, method, id, opSpec, testOpts())
 }
 
-func getMethodOperation(pi *openapi.PathItem, method string) *openapi.Operation {
-	switch method {
-	case "get":
-		return pi.Get
-	case "put":
-		return pi.Put
-	case "post":
-		return pi.Post
-	case "delete":
-		return pi.Delete
-	case "options":
-		return pi.Options
-	case "head":
-		return pi.Head
-	case "patch":
-		return pi.Patch
-	case "trace":
-		return pi.Trace
-	}
-	return nil
-}
+
 
 func TestNewService(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -108,7 +67,7 @@ func TestNewService(t *testing.T) {
 }
 
 func TestNewServiceWithPrefixSuffix(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -131,7 +90,7 @@ func TestNewServiceWithPrefixSuffix(t *testing.T) {
 }
 
 func TestNewServiceDefaultTag(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -149,7 +108,7 @@ func TestNewServiceDefaultTag(t *testing.T) {
 }
 
 func TestServiceGetImportName(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}

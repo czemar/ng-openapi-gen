@@ -1,3 +1,5 @@
+// Package gen provides naming conventions and TypeScript type mapping utilities
+// used throughout code generation.
 package gen
 
 import (

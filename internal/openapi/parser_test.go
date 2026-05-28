@@ -2,29 +2,13 @@ package openapi
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/czemar/ng-openapi-gen/internal/testutil"
 )
 
-func findProjectRoot(t *testing.T) string {
-	t.Helper()
-	dir, _ := os.Getwd()
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("could not find project root (go.mod)")
-		}
-		dir = parent
-	}
-}
-
 func TestParseSpec(t *testing.T) {
-	root := findProjectRoot(t)
-	petstorePath := filepath.Join(root, "test", "petstore-3.0.json")
+	petstorePath := testutil.TestSpecPath(t, "petstore-3.0.json")
 	spec, err := ParseSpec(petstorePath)
 	if err != nil {
 		t.Fatalf("ParseSpec(%q) failed: %v", petstorePath, err)
@@ -102,8 +86,7 @@ func TestParseSpec(t *testing.T) {
 }
 
 func TestParseAllTypes(t *testing.T) {
-	root := findProjectRoot(t)
-	specPath := filepath.Join(root, "test", "all-types.json")
+	specPath := testutil.TestSpecPath(t, "all-types.json")
 
 	spec, err := ParseSpec(specPath)
 	if err != nil {
@@ -131,8 +114,7 @@ func TestParseAllTypes(t *testing.T) {
 }
 
 func TestResolveRef(t *testing.T) {
-	root := findProjectRoot(t)
-	specPath := filepath.Join(root, "test", "petstore-3.0.json")
+	specPath := testutil.TestSpecPath(t, "petstore-3.0.json")
 
 	spec, err := ParseSpec(specPath)
 	if err != nil {
@@ -160,8 +142,7 @@ func TestResolveRef(t *testing.T) {
 }
 
 func TestResolveSchemaRef(t *testing.T) {
-	root := findProjectRoot(t)
-	specPath := filepath.Join(root, "test", "petstore-3.0.json")
+	specPath := testutil.TestSpecPath(t, "petstore-3.0.json")
 
 	spec, err := ParseSpec(specPath)
 	if err != nil {

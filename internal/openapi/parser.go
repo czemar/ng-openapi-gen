@@ -1,3 +1,5 @@
+// Package openapi parses OpenAPI 3.0 and 3.1 specifications from JSON and YAML
+// files into the internal type system used by the code generator.
 package openapi
 
 import (

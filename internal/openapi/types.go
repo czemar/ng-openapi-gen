@@ -217,3 +217,26 @@ func (r RawRequestBodyOrRef) IsRef() bool {
 func (r RawResponseOrRef) IsRef() bool {
 	return r.Ref != ""
 }
+
+// GetMethodOperation returns the Operation for a given HTTP method on a PathItem.
+func GetMethodOperation(pi *PathItem, method string) *Operation {
+	switch method {
+	case "get":
+		return pi.Get
+	case "put":
+		return pi.Put
+	case "post":
+		return pi.Post
+	case "delete":
+		return pi.Delete
+	case "options":
+		return pi.Options
+	case "head":
+		return pi.Head
+	case "patch":
+		return pi.Patch
+	case "trace":
+		return pi.Trace
+	}
+	return nil
+}

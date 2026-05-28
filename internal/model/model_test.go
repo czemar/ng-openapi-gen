@@ -1,33 +1,12 @@
 package model
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/czemar/ng-openapi-gen/internal/config"
 	"github.com/czemar/ng-openapi-gen/internal/openapi"
+	"github.com/czemar/ng-openapi-gen/internal/testutil"
 )
-
-func findProjectRoot(t *testing.T) string {
-	t.Helper()
-	dir, _ := os.Getwd()
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("could not find project root")
-		}
-		dir = parent
-	}
-}
-
-func testSpec(t *testing.T, name string) string {
-	t.Helper()
-	return filepath.Join(findProjectRoot(t), "test", name)
-}
 
 func defaultOpts() *config.Options {
 	return &config.Options{
@@ -77,7 +56,7 @@ func TestNewEnumValue(t *testing.T) {
 }
 
 func TestNewProperty(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -127,7 +106,7 @@ func TestNewProperty(t *testing.T) {
 }
 
 func TestNewModel(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -186,7 +165,7 @@ func TestNewModel(t *testing.T) {
 	})
 
 	t.Run("enum model", func(t *testing.T) {
-		enumSpec, err := openapi.ParseSpec(testSpec(t, "enums.json"))
+		enumSpec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "enums.json"))
 		if err != nil {
 			t.Fatalf("ParseSpec: %v", err)
 		}
@@ -196,7 +175,7 @@ func TestNewModel(t *testing.T) {
 			t.Fatalf("ResolveSchemaRef: %v", err)
 		}
 		opts.EnumStyle = "alias"
-		opts.EnumArray = boolPtr(true)
+		opts.EnumArray = testutil.BoolPtr(true)
 		m := NewModel(enumSpec, "FlavorEnum", enumSchema, opts)
 		if len(m.EnumValues) == 0 {
 			t.Errorf("expected enum values")
@@ -225,7 +204,7 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestNewModelAllTypes(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "all-types.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "all-types.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -266,6 +245,4 @@ func TestNewModelAllTypes(t *testing.T) {
 	})
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
+

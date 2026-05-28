@@ -1,11 +1,12 @@
 node_modules
 .directory
 dist
-out
 .idea
 
 # Go
 /ng-openapi-gen
+*.exe
+*.test
 coverage.out
 coverage.html
 
@@ -14,3 +15,10 @@ src/app/api/
 
 # Bun
 bun.lock
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Temp
+tmp/

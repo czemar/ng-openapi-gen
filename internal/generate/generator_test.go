@@ -2,6 +2,7 @@ package generate
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,30 +11,13 @@ import (
 
 	"github.com/czemar/ng-openapi-gen/internal/config"
 	"github.com/czemar/ng-openapi-gen/internal/openapi"
+	"github.com/czemar/ng-openapi-gen/internal/testutil"
 )
 
-func findProjectRoot(t *testing.T) string {
-	t.Helper()
-	dir, _ := os.Getwd()
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("could not find project root")
-		}
-		dir = parent
-	}
-}
-
-func testSpecPath(t *testing.T, name string) string {
-	t.Helper()
-	return filepath.Join(findProjectRoot(t), "test", name)
-}
+var updateGolden = flag.Bool("update", false, "update golden test baseline files in out/")
 
 func TestGeneratePetstore30(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -43,7 +27,7 @@ func TestGeneratePetstore30(t *testing.T) {
 		Output:             filepath.Join(t.TempDir(), "petstore-3.0"),
 		ModelPrefix:        "Petstore",
 		ModelSuffix:        "Model",
-		IgnoreUnusedModels: boolPtr(false),
+		IgnoreUnusedModels: testutil.BoolPtr(false),
 	}
 
 	gen := NewGenerator(spec, opts)
@@ -206,7 +190,7 @@ func TestGeneratePetstore30(t *testing.T) {
 }
 
 func TestGenerateAllTypes(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "all-types.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "all-types.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -217,7 +201,7 @@ func TestGenerateAllTypes(t *testing.T) {
 		IndexFile: true,
 		EnumStyle: "pascal",
 		Module:    "AllTypesModule",
-		Services:  boolPtr(true),
+		Services:  testutil.BoolPtr(true),
 	}
 
 	gen := NewGenerator(spec, opts)
@@ -280,7 +264,7 @@ func TestGenerateAllTypes(t *testing.T) {
 }
 
 func TestGenerateAllOperations(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "all-operations.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "all-operations.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -288,7 +272,7 @@ func TestGenerateAllOperations(t *testing.T) {
 	opts := &config.Options{
 		Input:    "all-operations.json",
 		Output:   filepath.Join(t.TempDir(), "all-operations"),
-		Services: boolPtr(true),
+		Services: testutil.BoolPtr(true),
 	}
 
 	gen := NewGenerator(spec, opts)
@@ -325,7 +309,7 @@ func TestGenerateAllOperations(t *testing.T) {
 }
 
 func TestGenerateEnums(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "enums.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "enums.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -442,7 +426,7 @@ func TestGenerateEnums(t *testing.T) {
 }
 
 func TestGenerateObservables(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -476,7 +460,7 @@ func TestGenerateObservables(t *testing.T) {
 }
 
 func TestGenerateNoServices(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -484,7 +468,7 @@ func TestGenerateNoServices(t *testing.T) {
 	opts := &config.Options{
 		Input:    "petstore-3.0.json",
 		Output:   filepath.Join(t.TempDir(), "no-services"),
-		Services: boolPtr(false),
+		Services: testutil.BoolPtr(false),
 	}
 
 	gen := NewGenerator(spec, opts)
@@ -514,7 +498,7 @@ func TestGenerateNoServices(t *testing.T) {
 }
 
 func TestGeneratePetstore31(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "petstore-3.1.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.1.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -546,7 +530,7 @@ func TestGeneratePetstore31(t *testing.T) {
 }
 
 func TestGenerateNoUnusedModels(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpecPath(t, "all-types.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "all-types.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec failed: %v", err)
 	}
@@ -554,7 +538,7 @@ func TestGenerateNoUnusedModels(t *testing.T) {
 	opts := &config.Options{
 		Input:              "all-types.json",
 		Output:             filepath.Join(t.TempDir(), "all-types-filtered"),
-		IgnoreUnusedModels: boolPtr(true),
+		IgnoreUnusedModels: testutil.BoolPtr(true),
 	}
 
 	gen := NewGenerator(spec, opts)
@@ -587,15 +571,11 @@ func assertNoNoValue(t *testing.T, dir string) {
 	}
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 // TestGoldenFiles regenerates output from each config and compares against the
 // expected output in the out/ directory. This catches regressions where the
 // generated output changes unexpectedly.
 func TestGoldenFiles(t *testing.T) {
-	projectRoot := findProjectRoot(t)
+	projectRoot := testutil.FindProjectRoot(t)
 
 	type goldenCase struct {
 		name       string
@@ -646,10 +626,6 @@ func TestGoldenFiles(t *testing.T) {
 		switch name {
 		case "templates": // Different template engine (Handlebars vs Go templates)
 			continue
-		case "camelize-model-names": // Referenced spec (keep-model-names.json) does not exist
-			continue
-		case "self-ref": // Referenced spec (self-ref-array.json) does not exist
-			continue
 		case "openapi31-jsonschema": // Parser cannot handle some 3.1 JSON Schema features (bool in items)
 			continue
 		}
@@ -682,8 +658,18 @@ func TestGoldenFiles(t *testing.T) {
 				t.Fatalf("Generate: %v", err)
 			}
 
+			if *updateGolden {
+				if err := os.RemoveAll(tc.expectDir); err != nil {
+					t.Fatalf("RemoveAll(%s): %v", tc.expectDir, err)
+				}
+				if err := copyDir(gen.OutDir, tc.expectDir); err != nil {
+					t.Fatalf("copyDir: %v", err)
+				}
+				t.Logf("Updated golden files: %s", tc.expectDir)
+				return
+			}
+
 			fmt.Printf("Generated output: %s\n", gen.OutDir)
-			// Debug: print generated file contents
 			for _, name := range []string{"api.ts", "api-configuration.ts", "models.ts", "functions.ts", "models/petstore-pet-model.ts", "models/petstore-pets-model.ts"} {
 				data, err := os.ReadFile(filepath.Join(gen.OutDir, name))
 				if err == nil {
@@ -777,4 +763,22 @@ func diffDirs(t *testing.T, expected, actual string) string {
 	}
 
 	return sb.String()
+}
+
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, _ := filepath.Rel(src, path)
+		target := filepath.Join(dst, rel)
+		if info.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0644)
+	})
 }

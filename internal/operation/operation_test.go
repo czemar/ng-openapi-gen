@@ -1,33 +1,12 @@
 package operation
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/czemar/ng-openapi-gen/internal/config"
 	"github.com/czemar/ng-openapi-gen/internal/openapi"
+	"github.com/czemar/ng-openapi-gen/internal/testutil"
 )
-
-func findProjectRoot(t *testing.T) string {
-	t.Helper()
-	dir, _ := os.Getwd()
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("could not find project root")
-		}
-		dir = parent
-	}
-}
-
-func testSpec(t *testing.T, name string) string {
-	t.Helper()
-	return filepath.Join(findProjectRoot(t), "test", name)
-}
 
 func testOpts() *config.Options {
 	return &config.Options{
@@ -38,7 +17,7 @@ func testOpts() *config.Options {
 }
 
 func TestNewOperationPetstore(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -88,7 +67,7 @@ func TestNewOperationPetstore(t *testing.T) {
 }
 
 func TestNewOperationAllOps(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "all-operations.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "all-operations.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -110,7 +89,7 @@ func TestNewOperationAllOps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.path+"."+tt.method, func(t *testing.T) {
 			pathSpec := spec.Paths[tt.path]
-			opSpec := getMethodOperation(pathSpec, tt.method)
+			opSpec := openapi.GetMethodOperation(pathSpec, tt.method)
 			if opSpec == nil {
 				t.Fatal("operation not found")
 			}
@@ -126,7 +105,7 @@ func TestNewOperationAllOps(t *testing.T) {
 }
 
 func TestNewOperationVariant(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -170,7 +149,7 @@ func TestNewContent(t *testing.T) {
 }
 
 func TestNewResponse(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -207,7 +186,7 @@ func TestNewResponse(t *testing.T) {
 }
 
 func TestNewParameter(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "petstore-3.0.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "petstore-3.0.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -235,7 +214,7 @@ func TestNewParameter(t *testing.T) {
 }
 
 func TestVariantTag(t *testing.T) {
-	spec, err := openapi.ParseSpec(testSpec(t, "all-operations.json"))
+	spec, err := openapi.ParseSpec(testutil.TestSpecPath(t, "all-operations.json"))
 	if err != nil {
 		t.Fatalf("ParseSpec: %v", err)
 	}
@@ -252,24 +231,4 @@ func TestVariantTag(t *testing.T) {
 	}
 }
 
-func getMethodOperation(pi *openapi.PathItem, method string) *openapi.Operation {
-	switch method {
-	case "get":
-		return pi.Get
-	case "put":
-		return pi.Put
-	case "post":
-		return pi.Post
-	case "delete":
-		return pi.Delete
-	case "options":
-		return pi.Options
-	case "head":
-		return pi.Head
-	case "patch":
-		return pi.Patch
-	case "trace":
-		return pi.Trace
-	}
-	return nil
-}
+

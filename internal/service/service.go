@@ -1,3 +1,5 @@
+// Package service generates Angular @Injectable service classes that wrap API
+// function calls, organized by OpenAPI tag.
 package service
 
 import (

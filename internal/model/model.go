@@ -1,3 +1,5 @@
+// Package model generates TypeScript model interfaces, type aliases, and enums
+// from OpenAPI component schemas.
 package model
 
 import (

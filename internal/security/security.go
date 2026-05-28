@@ -1,3 +1,5 @@
+// Package security models security scheme requirements from OpenAPI specs,
+// supporting apiKey, http, oauth2, and openIdConnect schemes.
 package security
 
 import (

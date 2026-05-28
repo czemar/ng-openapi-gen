@@ -1,3 +1,5 @@
+// Package operation generates TypeScript function definitions for each API
+// operation, including parameter handling and response type variants.
 package operation
 
 import (

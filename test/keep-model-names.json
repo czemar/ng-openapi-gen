@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "KeepModelNames",
+    "version": "1"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "CamelCase": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "snake_case": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,3 +1,6 @@
+// Package generate orchestrates the code generation process: it loads the parsed
+// OpenAPI spec, creates models, operations, services, and writes output files
+// using Go templates.
 package generate
 
 import (

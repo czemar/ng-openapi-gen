@@ -1,3 +1,5 @@
+// Package config handles loading and validating ng-openapi-gen configuration
+// from JSON files and CLI arguments.
 package config
 
 import (
