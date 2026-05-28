@@ -1,24 +1,9 @@
 ---
-layout: default
 title: Custom templates
-parent: Customization
-nav_order: 1
+weight: 1
 ---
-
-# Custom templates
-
-{: .no_toc }
 
 You can override any generated file by providing custom [Go text/templates](https://pkg.go.dev/text/template).
-
-## Table of contents
-
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
-
----
 
 ## How it works
 
@@ -81,7 +66,6 @@ These functions are available inside templates in addition to Go's built-in temp
 
 Copy `templates/model.go.tmpl` to `src/templates/model.go.tmpl` and edit it to extend a base interface:
 
-{% raw %}
 ```gotemplate
 export interface {{ .TypeName }} extends BaseModel {
   {{- range .Properties }}
@@ -89,9 +73,9 @@ export interface {{ .TypeName }} extends BaseModel {
   {{- end }}
 }
 ```
-{% endraw %}
 
 Now all generated models extend `BaseModel`:
+
 ```typescript
 export interface Pet extends BaseModel {
   id: number;

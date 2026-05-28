@@ -1,37 +1,22 @@
 ---
-layout: default
 title: Petstore example
-parent: Examples
-nav_order: 1
+weight: 1
 ---
-
-# Petstore example
-
-{: .no_toc }
 
 This walkthrough uses the [Swagger Petstore](https://petstore.swagger.io/) OpenAPI 3.0 specification to demonstrate a complete generation and usage workflow.
-
-## Table of contents
-
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
-
----
 
 ## Specification
 
 The Petstore spec (saved as `petstore.yaml`) defines:
 
-- **GET /pets** -- List all pets (with optional `limit` query param)
-- **POST /pets** -- Create a new pet
-- **GET /pets/{petId}** -- Find pet by ID
+- **GET /pets** — List all pets (with optional `limit` query param)
+- **POST /pets** — Create a new pet
+- **GET /pets/{petId}** — Find pet by ID
 
 And schemas:
-- `Pet` -- `{ id: integer, name: string, tag?: string }`
-- `Pets` -- `Array<Pet>`
-- `Error` -- `{ code: integer, message: string }`
+- `Pet` — `{ id: integer, name: string, tag?: string }`
+- `Pets` — `Array<Pet>`
+- `Error` — `{ code: integer, message: string }`
 
 ---
 

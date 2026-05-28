@@ -1,23 +1,11 @@
 ---
-layout: default
 title: Installation
-nav_order: 2
+weight: 2
 ---
 
-# Installation
+## Installation
 
-{: .no_toc }
-
-## Table of contents
-
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
-
----
-
-## Install via Go
+### Install via Go
 
 ```bash
 go install github.com/czemar/ng-openapi-gen/cmd/ng-openapi-gen@latest
@@ -25,10 +13,10 @@ go install github.com/czemar/ng-openapi-gen/cmd/ng-openapi-gen@latest
 
 This installs the `ng-openapi-gen` binary to your `$GOPATH/bin` (or `$HOME/go/bin`).
 
-{: .note }
-Requires Go 1.21+. Verify with `go version`.
+> [!NOTE]
+> Requires Go 1.21+. Verify with `go version`.
 
-## Download pre-built binary
+### Download pre-built binary
 
 Download the latest release from the [releases page](https://github.com/czemar/ng-openapi-gen/releases). Binaries are available for:
 
@@ -38,7 +26,7 @@ Download the latest release from the [releases page](https://github.com/czemar/n
 
 Extract the archive and add the binary to your `PATH`.
 
-## Build from source
+### Build from source
 
 ```bash
 git clone https://github.com/czemar/ng-openapi-gen.git

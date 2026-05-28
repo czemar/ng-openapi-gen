@@ -1,0 +1,23 @@
+baseURL = "https://czemar.github.io/ng-openapi-gen/"
+title = "ng-openapi-gen"
+defaultContentLanguage = "en"
+
+[params]
+  description = "OpenAPI 3.0 & 3.1 code generator for Angular"
+[params.navbar]
+  display = "always"
+[params.footer]
+  display = true
+[params.editURL]
+  enable = false
+
+[module]
+  [[module.imports]]
+    path = "github.com/imfing/hextra"
+
+[[menu.main]]
+  name = "GitHub"
+  url = "https://github.com/czemar/ng-openapi-gen"
+  weight = 10
+  [menu.main.params]
+    external = true

@@ -1,24 +1,9 @@
 ---
-layout: default
 title: Generated Code
-nav_order: 5
-
+weight: 5
 ---
-
-# Generated Code
-
-{: .no_toc }
 
 ng-openapi-gen produces TypeScript files organized into functional groups. This page explains the output structure and how to use each piece.
-
-## Table of contents
-
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
-
----
 
 ## Output structure
 

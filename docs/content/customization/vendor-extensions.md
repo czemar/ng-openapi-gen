@@ -1,23 +1,15 @@
 ---
-layout: default
 title: Vendor extensions
-parent: Customization
-nav_order: 2
+weight: 2
 ---
 
-# Vendor extensions
-
-ng-openapi-gen supports these OpenAPI vendor extensions:
+ng-openapi-gen supports these OpenAPI vendor extensions.
 
 ---
 
 ## `x-operation-name`
 
-{: .d-inline-block }
-LoopBack compatible
-{: .label .label-green }
-
-Override the generated method name for an operation. Useful when you want shorter or more domain-specific names per tag.
+LoopBack compatible. Override the generated method name for an operation. Useful when you want shorter or more domain-specific names per tag.
 
 ```yaml
 paths:
@@ -43,11 +35,7 @@ Result:
 
 ## `x-enumNames`
 
-{: .d-inline-block }
-NSwag compatible
-{: .label .label-green }
-
-Customize TypeScript enum member names. Must be an array with the same length as the enum values.
+NSwag compatible. Customize TypeScript enum member names. Must be an array with the same length as the enum values.
 
 ```yaml
 components:

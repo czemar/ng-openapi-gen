@@ -1,23 +1,9 @@
 ---
-layout: default
 title: CLI Usage
-nav_order: 4
+weight: 4
 ---
-
-# CLI Usage
-
-{: .no_toc }
 
 All configuration options can be passed as CLI flags. Flags override values from the config file.
-
-## Table of contents
-
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
-
----
 
 ## Basic usage
 

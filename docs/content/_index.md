@@ -1,27 +1,24 @@
 ---
-layout: home
-title: Home
-nav_order: 1
+title: ng-openapi-gen
+toc: false
 ---
 
 # ng-openapi-gen
 
-{: .fs-6 }
 An **OpenAPI 3.0 and 3.1 code generator** for **Angular 16+**.
 
-{: .fs-4 }
 Generates TypeScript model interfaces, typed API functions, and Angular `@Injectable` services directly from your OpenAPI specification.
 
 ---
 
 ## Why ng-openapi-gen?
 
-- **Type-safe API clients** -- Models, parameters, and responses are fully typed
-- **OpenAPI 3.0 & 3.1** -- Supports both versions in JSON and YAML
-- **Promise & Observable** -- Choose your preferred async model
-- **Tree-shakeable** -- Only the functions you use end up in your bundle
-- **Customizable templates** -- Override any generated file with Go templates
-- **Works with Angular CLI** -- Easy integration into existing projects
+- **Type-safe API clients** — Models, parameters, and responses are fully typed
+- **OpenAPI 3.0 & 3.1** — Supports both versions in JSON and YAML
+- **Promise & Observable** — Choose your preferred async model
+- **Tree-shakeable** — Only the functions you use end up in your bundle
+- **Customizable templates** — Override any generated file with Go templates
+- **Works with Angular CLI** — Easy integration into existing projects
 
 ---
 
@@ -57,7 +54,7 @@ export class MyComponent {
 
 | Feature | Description |
 |---|---|
-| Functional API | Each operation is a standalone function -- only bundle what you use |
+| Functional API | Each operation is a standalone function — only bundle what you use |
 | Services (optional) | Traditional `@Injectable` services per API tag |
 | Models | TypeScript interfaces for all schemas, with prefix/suffix support |
 | Enums | Configurable enum styles: `alias`, `upper`, `pascal`, `ignorecase` |

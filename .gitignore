@@ -20,5 +20,10 @@ bun.lock
 .DS_Store
 Thumbs.db
 
+# Hugo docs output
+public/
+docs/public/
+.hugo_build.lock
+
 # Temp
 tmp/
