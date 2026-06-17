@@ -222,8 +222,8 @@ func (m *Model) collectOrphanRequiredProperties(schema *openapi.Schema) {
 		if subschema.Ref != "" {
 			continue
 		}
-		if len(subschema.Schema.Required) > 0 && len(subschema.Schema.Properties) == 0 {
-			m.OrphanRequiredProperties = append(m.OrphanRequiredProperties, subschema.Schema.Required...)
+		if len(subschema.Required) > 0 && len(subschema.Properties) == 0 {
+			m.OrphanRequiredProperties = append(m.OrphanRequiredProperties, subschema.Required...)
 		}
 	}
 }
@@ -297,6 +297,6 @@ func makeSet(items []string) map[string]bool {
 func mapToSchema(m map[string]any) *openapi.Schema {
 	data, _ := json.Marshal(m)
 	var s openapi.Schema
-	json.Unmarshal(data, &s)
+	_ = json.Unmarshal(data, &s)
 	return &s
 }

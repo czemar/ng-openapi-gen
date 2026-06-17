@@ -283,9 +283,7 @@ func (g *Generator) Generate() error {
 	for _, name := range svcNames {
 		svc := g.Services[name]
 		for _, op := range svc.Operations {
-			for _, variant := range op.Variants {
-				allFunctions = append(allFunctions, variant)
-			}
+			allFunctions = append(allFunctions, op.Variants...)
 		}
 	}
 
@@ -500,7 +498,7 @@ func newModelIndex(models []*model.Model, opts *config.Options) *ModelIndex {
 }
 
 func (g *Generator) readRootURL() string {
-	if g.Spec.Servers == nil || len(g.Spec.Servers) == 0 {
+	if len(g.Spec.Servers) == 0 {
 		return ""
 	}
 	server := g.Spec.Servers[0]

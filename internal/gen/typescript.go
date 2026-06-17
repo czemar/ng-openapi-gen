@@ -2,7 +2,6 @@ package gen
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -293,8 +292,6 @@ func EscapeJS(s string) string {
 	s = strings.ReplaceAll(s, "\t", "\\t")
 	return s
 }
-
-var reNonWord = regexp.MustCompile(`[^\w$]+`)
 
 func uniqueStrings(s []string) []string {
 	seen := make(map[string]bool)

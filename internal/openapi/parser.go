@@ -23,19 +23,32 @@ func ParseSpec(path string) (*Spec, error) {
 }
 
 // ParseSpecBytes parses OpenAPI spec bytes (JSON or YAML) without file I/O.
-// The filename hint is used only to determine format; use any name with the
-// correct extension, or an empty string to default to JSON.
+// The filename hint is used only to determine format when given; when empty or
+// when the extension is unrecognized, the content is auto-detected (JSON if
+// the first non-space byte is '{', otherwise YAML).
 func ParseSpecBytes(data []byte, filenameHint string) (*Spec, error) {
+	var (
+		asJSON bool
+		spec   Spec
+	)
+
 	ext := strings.ToLower(filepath.Ext(filenameHint))
-	var spec Spec
 	switch ext {
+	case ".json":
+		asJSON = true
 	case ".yaml", ".yml":
-		if err := yaml.Unmarshal(data, &spec); err != nil {
-			return nil, fmt.Errorf("parse YAML: %w", err)
-		}
+		asJSON = false
 	default:
+		asJSON = isJSON(data)
+	}
+
+	if asJSON {
 		if err := json.Unmarshal(data, &spec); err != nil {
 			return nil, fmt.Errorf("parse JSON: %w", err)
+		}
+	} else {
+		if err := yaml.Unmarshal(data, &spec); err != nil {
+			return nil, fmt.Errorf("parse YAML: %w", err)
 		}
 	}
 
@@ -176,7 +189,7 @@ func findOrderedKeys(dec *json.Decoder, parts []string) []string {
 	}
 
 	// Consume closing delimiter (shouldn't reach here for valid JSON)
-	dec.Token()
+	_, _ = dec.Token()
 	return nil
 }
 
@@ -201,7 +214,7 @@ func collectObjectKeys(dec *json.Decoder) []string {
 		}
 		skipValue(dec, valueTok)
 	}
-	dec.Token() // consume closing }
+	_, _ = dec.Token() // consume closing }
 	return keys
 }
 
@@ -212,18 +225,18 @@ func skipValue(dec *json.Decoder, tok json.Token) {
 		case '{':
 			for dec.More() {
 				// Skip key
-				dec.Token()
+				_, _ = dec.Token()
 				// Skip value
 				valTok, _ := dec.Token()
 				skipValue(dec, valTok)
 			}
-			dec.Token() // consume closing }
+			_, _ = dec.Token() // consume closing }
 		case '[':
 			for dec.More() {
 				elemTok, _ := dec.Token()
 				skipValue(dec, elemTok)
 			}
-			dec.Token() // consume closing ]
+			_, _ = dec.Token() // consume closing ]
 		}
 	}
 }

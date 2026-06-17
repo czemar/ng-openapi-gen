@@ -693,7 +693,7 @@ func diffDirs(t *testing.T, expected, actual string) string {
 	actualFiles := make(map[string]string)
 
 	walk := func(root string, dest map[string]string) {
-		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -713,12 +713,12 @@ func diffDirs(t *testing.T, expected, actual string) string {
 
 	for rel := range expectedFiles {
 		if _, ok := actualFiles[rel]; !ok {
-			sb.WriteString(fmt.Sprintf("  missing: %s\n", rel))
+			fmt.Fprintf(&sb, "  missing: %s\n", rel)
 		}
 	}
 	for rel := range actualFiles {
 		if _, ok := expectedFiles[rel]; !ok {
-			sb.WriteString(fmt.Sprintf("  extra:   %s\n", rel))
+			fmt.Fprintf(&sb, "  extra:   %s\n", rel)
 		}
 	}
 
@@ -729,16 +729,16 @@ func diffDirs(t *testing.T, expected, actual string) string {
 		}
 		expData, err := os.ReadFile(expPath)
 		if err != nil {
-			sb.WriteString(fmt.Sprintf("  read error (%s): %v\n", rel, err))
+			fmt.Fprintf(&sb, "  read error (%s): %v\n", rel, err)
 			continue
 		}
 		actData, err := os.ReadFile(actPath)
 		if err != nil {
-			sb.WriteString(fmt.Sprintf("  read error (%s): %v\n", rel, err))
+			fmt.Fprintf(&sb, "  read error (%s): %v\n", rel, err)
 			continue
 		}
 		if !bytes.Equal(expData, actData) {
-			sb.WriteString(fmt.Sprintf("  differ:  %s\n", rel))
+			fmt.Fprintf(&sb, "  differ:  %s\n", rel)
 			// Show line-level diff for debugging
 			expLines := strings.Split(string(expData), "\n")
 			actLines := strings.Split(string(actData), "\n")
@@ -755,7 +755,7 @@ func diffDirs(t *testing.T, expected, actual string) string {
 					a = actLines[i]
 				}
 				if e != a {
-					sb.WriteString(fmt.Sprintf("    line %d:\n      -%s\n      +%s\n", i+1, e, a))
+					fmt.Fprintf(&sb, "    line %d:\n      -%s\n      +%s\n", i+1, e, a)
 					break // show first difference only
 				}
 			}

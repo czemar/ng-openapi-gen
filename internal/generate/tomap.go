@@ -39,7 +39,7 @@ func convertValue(v reflect.Value, visited map[uintptr]bool, depth int) (any, bo
 	}
 
 	// Dereference pointers with cycle detection
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return nil, false
 		}

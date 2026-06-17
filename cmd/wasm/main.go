@@ -32,7 +32,7 @@ func generateWrapper(this js.Value, args []js.Value) any {
 	}
 	opts.Silent = true
 
-	spec, err := openapi.ParseSpecBytes(specBytes, "spec.yaml")
+	spec, err := openapi.ParseSpecBytes(specBytes, "")
 	if err != nil {
 		return `{"error":"` + err.Error() + `"}`
 	}

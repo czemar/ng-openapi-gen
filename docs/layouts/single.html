@@ -6,12 +6,20 @@
       <main id="content" class="hx:w-full hx:min-w-0 hextra-max-content-width hx:px-6 hx:pt-4 hx:md:px-12">
         {{ partial "breadcrumb.html" (dict "page" . "enable" true) }}
         <div class="content">
-          <h1>{{ .Title }}</h1>
-          <div id="demo-app"></div>
+          {{ if .Title }}
+          <div class="hx:flex hx:flex-col hx:sm:flex-row hx:items-start hx:sm:items-center hx:sm:justify-between hx:gap-4 hx:mb-4">
+            <h1 class="hx:mb-0">{{ .Title }}</h1>
+            {{ partial "components/page-context-menu" . }}
+          </div>
+          {{ end }}
+          {{ .Content }}
         </div>
+        {{ partial "components/last-updated.html" . }}
+        {{- if (site.Params.page.displayPagination | default true) -}}
+          {{- partial "components/pager.html" . -}}
+        {{- end -}}
+        {{ partial "components/comments.html" . }}
       </main>
     </article>
   </div>
-  <script src="wasm_exec.js"></script>
-  <script type="module" src="demo.js"></script>
 {{ end }}

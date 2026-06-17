@@ -149,13 +149,13 @@ func ParseOptionsFromArgs(args []string) (*Options, error) {
 
 	// Simple arg parsing - look for --config and --input
 	for i := 0; i < len(args); i++ {
-		switch {
-		case args[i] == "--config" || args[i] == "-c":
+		switch args[i] {
+		case "--config", "-c":
 			if i+1 < len(args) {
 				configPath = args[i+1]
 				i++
 			}
-		case args[i] == "--input" || args[i] == "-i":
+		case "--input", "-i":
 			if i+1 < len(args) {
 				input = args[i+1]
 				i++

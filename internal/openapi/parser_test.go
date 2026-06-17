@@ -65,23 +65,23 @@ func TestParseSpec(t *testing.T) {
 		t.Errorf("Pet schema should not be a $ref, got %q", petSchema.Ref)
 	}
 	// Pet has no explicit "type" field — it uses properties to imply object type
-	if petSchema.Schema.Properties == nil {
+	if petSchema.Properties == nil {
 		t.Fatal("Pet schema properties is nil")
 	}
 	expectedProps := []string{"id", "name", "tag"}
 	for _, prop := range expectedProps {
-		if _, ok := petSchema.Schema.Properties[prop]; !ok {
+		if _, ok := petSchema.Properties[prop]; !ok {
 			t.Errorf("expected property %q on Pet", prop)
 		}
 	}
 	// Check id property type
-	idProp := petSchema.Schema.Properties["id"]
-	if idProp.Schema.Type != "integer" {
-		t.Errorf("Pet.id type = %v, want %q", idProp.Schema.Type, "integer")
+	idProp := petSchema.Properties["id"]
+	if idProp.Type != "integer" {
+		t.Errorf("Pet.id type = %v, want %q", idProp.Type, "integer")
 	}
 	// Check the required array
-	if len(petSchema.Schema.Required) != 2 {
-		t.Errorf("Pet.required length = %d, want 2", len(petSchema.Schema.Required))
+	if len(petSchema.Required) != 2 {
+		t.Errorf("Pet.required length = %d, want 2", len(petSchema.Required))
 	}
 }
 
@@ -133,10 +133,10 @@ func TestResolveRef(t *testing.T) {
 	if !ok {
 		t.Fatalf("ResolveRef(%q) returned type %T, want *RawSchemaOrRef", ref, result)
 	}
-	if schemaRef.Schema.Properties == nil {
+	if schemaRef.Properties == nil {
 		t.Fatal("resolved schema should have properties")
 	}
-	if _, ok := schemaRef.Schema.Properties["id"]; !ok {
+	if _, ok := schemaRef.Properties["id"]; !ok {
 		t.Errorf("expected property 'id' in resolved Pet schema")
 	}
 }

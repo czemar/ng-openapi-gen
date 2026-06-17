@@ -1,4 +1,4 @@
-.PHONY: all build test test-race vet clean
+.PHONY: all build test test-race vet clean wasm docs lint
 
 BINARY=ng-openapi-gen
 COVERPROFILE=coverage.out
@@ -18,6 +18,15 @@ test-race:
 
 vet:
 	go vet ./...
+
+lint:
+	golangci-lint run ./...
+
+wasm:
+	GOOS=js GOARCH=wasm go build -o docs/static/demo/demo.wasm ./cmd/wasm/
+
+docs: wasm
+	hugo server --source docs
 
 clean:
 	rm -f $(BINARY) $(COVERPROFILE) coverage.html

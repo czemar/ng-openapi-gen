@@ -6,6 +6,8 @@ defaultContentLanguage = "en"
   description = "OpenAPI 3.0 & 3.1 code generator for Angular"
 [params.navbar]
   display = "always"
+  displayTitle = true
+  displayLogo = false
 [params.footer]
   display = true
 [params.editURL]
@@ -21,3 +23,5 @@ defaultContentLanguage = "en"
   weight = 10
   [menu.main.params]
     external = true
+    type = "link"
+    icon = "github"

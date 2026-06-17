@@ -157,36 +157,6 @@ func (v *OperationVariant) Tag() string {
 	return "Api"
 }
 
-func (v *OperationVariant) descriptionPrefix() string {
-	desc := strings.TrimSpace(v.Operation.Description)
-	summary := v.Operation.Summary
-	if summary != "" {
-		if !strings.HasSuffix(summary, ".") {
-			summary += "."
-		}
-		if desc != "" {
-			summary += "\n\n" + desc
-		}
-		desc = summary
-	}
-	if desc != "" {
-		desc += "\n\n"
-	}
-	return desc
-}
-
-func (v *OperationVariant) descriptionSuffix() string {
-	sends := ""
-	if v.RequestBody != nil {
-		sends = "sends `" + v.RequestBody.MediaType + "` and "
-	}
-	handles := "doesn't expect any request body"
-	if v.RequestBody != nil {
-		handles = "handles request body of type `" + v.RequestBody.MediaType + "`"
-	}
-	return "\n\nThis method " + sends + handles + "."
-}
-
 // GetImportName implements Importable
 func (v *OperationVariant) GetImportName() string          { return v.ImportName }
 func (v *OperationVariant) GetImportPath() string          { return v.ImportPath }
